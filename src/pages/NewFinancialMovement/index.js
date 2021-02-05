@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 
@@ -11,29 +11,40 @@ export default function NewMovement() {
     const [name, setName] = useState('');
     const [classification, setClassification] = useState('');
     const [value, setValue] = useState('');
-    
-
 
     const history = useHistory();
 
-    const userId = localStorage.getItem('userId');
+    const userToken = localStorage.getItem('token');
+
+    useLayoutEffect(() => {
+        if(!userToken) {
+            alert('A sessão expirou, por favor faça login novamente');
+            history.push('/');
+        }
+    }, [history, userToken]);
 
     async function handleNewMovement(e) {
         e.preventDefault();
 
         const data = {
-            user_id: userId,
             name,
             classification,
             value,
         };
 
         try{
-            await api.post('api/financial-movement', data);
-            
+            await api.post(
+                'api/financial-movement', 
+                data, 
+                {
+                    headers: {
+                    'Authorization': `Basic ${userToken}` 
+                    }
+                }
+            );
             history.push('/profile');
         } catch (err) {
-            alert('Erro ao cadastrar movimento, tente novamente.');
+            alert('Erro ao cadastrar movimento, tente novamente. ');
         }
     }
 

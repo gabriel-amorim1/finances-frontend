@@ -18,22 +18,36 @@ export default function Register() {
     async function handleRegister(e){
         e.preventDefault();
 
-        const data = {
-            name,
-            email,
-            // password,
-            // confirmPassword,
-        };
-        
-        try{
-            const response = await api.post('/api/user', data);
-            console.log(response.body);
-            alert(`Seu ID de acesso: ${response.data.id}`);
-            history.push('/');
-        }catch(err){
-            console.log(err);
-            alert('Erro no cadastro, tente novamente');
+        if (password === confirmPassword) {
+            if(password.length >= 6) {
+                const data = {
+                    name,
+                    email,
+                    password,
+                };
+                
+                try{
+                    await api.post('/api/user', data);
+                    const response = await api.post('api/sessions/', {
+                        email,
+                        password,
+                    });
+    
+                    localStorage.setItem('userName', response.data.user.name);
+                    localStorage.setItem('token', response.data.token);
+    
+                    history.push('/profile');
+                }catch(err){
+                    console.log(err);
+                    alert('Erro no cadastro, tente novamente');
+                }
+            } else {
+                alert('A senha deve conter 6 ou mais caracteres');
+            }
+        } else {
+            alert('As senhas não coincidem, tente novamente');
         }
+        
     }
 
     return (

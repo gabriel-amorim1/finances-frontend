@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useLayoutEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiPower, FiTrash2 } from 'react-icons/fi';
 
@@ -30,9 +30,18 @@ export default function Profile() {
 
     const userId = localStorage.getItem('userId');
     const userName = localStorage.getItem('userName');
+    const userToken = localStorage.getItem('token');
 
-    useEffect(() => {
-            api.get('api/spending-division/' + userId).then(response => {
+    useLayoutEffect(() => {
+        if(!userToken) {
+            alert('A sessão expirou, por favor faça login novamente');
+            history.push('/');
+        } else {
+            api.get('api/spending-division/', {
+                headers: {
+                'Authorization': `Basic ${userToken}` 
+                }
+            }).then(response => {
                 setIncome(response.data.income);
                 setEssentialExpenses(response.data.essentialExpenses);
                 setNonEssentialExpenses(response.data.nonEssentialExpenses);
@@ -48,14 +57,14 @@ export default function Profile() {
                 ]);
             }).catch(error => {
                 console.log(error);
-                if(!userId) {
-                    alert('A sessão expirou, por favor faça login novamente');
-                    history.push('/');
-                }
                 alert('Esse usuário não possui movimento financeiro do tipo receita ainda, favor cadastrar');
                 history.push('/financial-movement/new');
             })
-            api.get('api/spending-division/base/' + userId).then(response => {
+            api.get('api/spending-division/base/', {
+                headers: {
+                'Authorization': `Basic ${userToken}` 
+                }
+            }).then(response => {
                 setBaseIncome(response.data.income);
                 setBaseEssentialExpenses(response.data.essentialExpenses);
                 setBaseNonEssentialExpenses(response.data.nonEssentialExpenses);
@@ -63,7 +72,8 @@ export default function Profile() {
                 setBaseWaste(response.data.waste);
                 setBaseRemnant(response.data.remnant);
             })
-    }, [history, userId]);
+        }
+    }, [history, userToken]);
 
     function transformDecimalInPercentage(decimalNumber) {
         if (decimalNumber === 0) return '0'; 
@@ -71,7 +81,6 @@ export default function Profile() {
             decimalNumber = decimalNumber + '';
 
             if (decimalNumber === '1') return '100';
-            
             
             if (decimalNumber.split(".")[1].split('').length === 1) {
                 return decimalNumber.split(".")[1] + 0
@@ -88,9 +97,13 @@ export default function Profile() {
     async function searchMovements(e, cleanFilter = false) {
         e.preventDefault();
         try {
-            let url = 'api/financial-movement?user_id=' + userId;
+            let url = 'api/financial-movement?';
             if(cleanUpFilters) {
-                await api.get(url).then(response => {
+                await api.get(url, {
+                    headers: {
+                    'Authorization': `Basic ${userToken}` 
+                    }
+                }).then(response => {
                     setMovements([
                         ...response.data.data
                     ]);
@@ -107,7 +120,11 @@ export default function Profile() {
                     url += '&sortOrder=' + orderFilter.split('/')[1];
                 } 
 
-                await api.get(url).then(response => {
+                await api.get(url, {
+                    headers: {
+                        'Authorization': `Basic ${userToken}` 
+                    }
+                }).then(response => {
                     console.log(response.data.data)
                     setMovements([
                         ...response.data.data
@@ -115,14 +132,18 @@ export default function Profile() {
                 })
             }
         } catch (error) {
-            console.log(error);
-            alert('Erro ao filtrar movimentos, tente novamente.');
+            console.log(userToken);
+            alert('Erro ao filtrar movimentos, tente novamente.'+error);
         }
     }
 
     async function handleDeleteMovement(id) {
         try{
-            await api.delete('api/financial-movement/' + id);
+            await api.delete('api/financial-movement/' + id, {
+                headers: {
+                    'Authorization': `Basic ${userToken}` 
+                }
+            });
             setMovements(movements.filter(movement => movement.id !== id));
             api.get('api/spending-division/' + userId).then(response => {
                 setIncome(response.data.income);
@@ -140,7 +161,7 @@ export default function Profile() {
             })
         } catch (err) {
             console.log(err);
-            alert('Erro ao deletar caso, tente novamente.');
+            alert('Erro ao deletar movimento, tente novamente.');
         }
     }
 

@@ -24,6 +24,10 @@
     margin-bottom: 32px;
 }
 
+.login-container section.form form input {
+    margin-top: 5px;
+}
+
 .login-container section.description {
     width: 100%;
     max-width: 500px;
