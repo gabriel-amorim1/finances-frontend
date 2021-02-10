@@ -38,7 +38,6 @@ export default function Register() {
     
                     history.push('/profile');
                 }catch(err){
-                    console.log(err);
                     alert('Erro no cadastro, tente novamente');
                 }
             } else {

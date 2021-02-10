@@ -71,11 +71,11 @@ export default function NewMovement() {
                      <select id={classification} name="classification" value={classification} onChange={(e) => { setClassification(e.target.value)}}>
                         <option value="" disabled hidden>Escolha a classificação do movimento</option>
                         {[
-                            { value: 'receita', label: 'Receita' },
-                            { value: 'gastos essenciais', label: 'Gastos essenciais' },
-                            { value: 'gastos não essenciais', label: 'Gastos não essenciais' },
-                            { value: 'investimentos', label: 'Investimentos' },
-                            { value: 'torrar', label: 'Torrar' },
+                            { value: 'RECEITAS', label: 'Receita' },
+                            { value: 'GASTOS ESSENCIAIS', label: 'Gastos essenciais' },
+                            { value: 'GASTOS NAO ESSENCIAIS', label: 'Gastos não essenciais' },
+                            { value: 'INVESTIMENTOS', label: 'Investimentos' },
+                            { value: 'GASTOS LIVRES', label: 'Gastos livres' },
                         ].map(option => {
                             return <option key={option.value} value={option.value}>{option.label}</option>
                         })}

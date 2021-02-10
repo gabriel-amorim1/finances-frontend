@@ -1,6 +1,6 @@
 import React, { useState, useLayoutEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import { FiPower, FiTrash2 } from 'react-icons/fi';
+import { FiPower, FiTrash2, FiArrowDown, FiArrowUp } from 'react-icons/fi';
 
 import api from '../../services/api';
 import './styles.css';
@@ -22,9 +22,8 @@ export default function Profile() {
     const [baseWaste, setBaseWaste] = useState({});
     const [baseRemnant, setBaseRemnant] = useState({});
 
-    const [classificationFilter, setClassificationFilter] = useState('');
     const [nameFilter, setNameFilter] = useState('');
-    const [orderFilter, setOrderFilter] = useState('');
+    const [valueFilter, setValueFilter] = useState('');
     const [cleanUpFilters, setCleanUpFilters] = useState(false);
     const history = useHistory();
 
@@ -56,7 +55,6 @@ export default function Profile() {
                     ...response.data.waste.financial_movements,
                 ]);
             }).catch(error => {
-                console.log(error);
                 alert('Esse usuário não possui movimento financeiro do tipo receita ainda, favor cadastrar');
                 history.push('/financial-movement/new');
             })
@@ -94,7 +92,7 @@ export default function Profile() {
         }
     }
 
-    async function searchMovements(e, cleanFilter = false) {
+    async function searchMovements(e) {
         e.preventDefault();
         try {
             let url = 'api/financial-movement?';
@@ -107,33 +105,43 @@ export default function Profile() {
                     setMovements([
                         ...response.data.data
                     ]);
+                    setCleanUpFilters(false);
+                    setNameFilter('');
+                    setValueFilter('');
                 })
-                setCleanUpFilters(false);
-                setClassificationFilter('');
-                setNameFilter('');
-                setOrderFilter('');
             } else {
-                if (classificationFilter) url += '&classification=' + classificationFilter;
                 if (nameFilter) url += '&name=' + nameFilter;
-                if (orderFilter){
-                    url += '&sortParam=' + orderFilter.split('/')[0];
-                    url += '&sortOrder=' + orderFilter.split('/')[1];
-                } 
+                if (valueFilter) url += '&value=' + valueFilter;
 
                 await api.get(url, {
                     headers: {
                         'Authorization': `Basic ${userToken}` 
                     }
                 }).then(response => {
-                    console.log(response.data.data)
                     setMovements([
                         ...response.data.data
                     ]);
                 })
             }
         } catch (error) {
-            console.log(userToken);
-            alert('Erro ao filtrar movimentos, tente novamente.'+error);
+            alert('Erro ao filtrar movimentos, tente novamente.');
+        }
+    }
+
+    async function sortFilter(sortParam, sortOrder) {
+        try {
+            let url = 'api/financial-movement?sortParam=' + sortParam + '&sortOrder='+sortOrder;
+
+            await api.get(url, {
+                headers: {
+                    'Authorization': `Basic ${userToken}` 
+                }
+            }).then(response => {
+                setMovements([
+                    ...response.data.data
+                ]);
+            })
+        } catch (error) {
         }
     }
 
@@ -160,7 +168,6 @@ export default function Profile() {
                 ]);
             })
         } catch (err) {
-            console.log(err);
             alert('Erro ao deletar movimento, tente novamente.');
         }
     }
@@ -183,30 +190,30 @@ export default function Profile() {
                 </button>
             </header>
             <div className="spending-division">
-                <h1>Divisão de gastos e movimentos financeiros</h1>
+                <h1>Divisão de gastos</h1>
                 <ul>
                     <li>
                         <h2>Divisão de gastos atual</h2>
                         <ul>
                             <li>
                                 <strong>Total de receitas:</strong>
-                                <p>R$ {income.inValue} / {transformDecimalInPercentage(income.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(income.inValue)} / {transformDecimalInPercentage(income.inPercentage)}%</p>
 
                                 <strong>Total de Gastos essenciais:</strong>
-                                <p>R$ {essentialExpenses.inValue} / {transformDecimalInPercentage(essentialExpenses.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(essentialExpenses.inValue)} / {transformDecimalInPercentage(essentialExpenses.inPercentage)}%</p>
 
                                 <strong>Total de Gastos Não essenciais:</strong>
-                                <p>R$ {nonEssentialExpenses.inValue} / {transformDecimalInPercentage(nonEssentialExpenses.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(nonEssentialExpenses.inValue)} / {transformDecimalInPercentage(nonEssentialExpenses.inPercentage)}%</p>
                             </li>
                             <li>
                                 <strong>Total de Investimentos:</strong>
-                                <p>R$ {investments.inValue} / {transformDecimalInPercentage(investments.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(investments.inValue)} / {transformDecimalInPercentage(investments.inPercentage)}%</p>
 
                                 <strong>Total de Gastos livres:</strong>
-                                <p>R$ {waste.inValue} / {transformDecimalInPercentage(waste.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(waste.inValue)} / {transformDecimalInPercentage(waste.inPercentage)}%</p>
                                 
                                 <strong>Restante</strong>
-                                <p>R$ {remnant.inValue} / {transformDecimalInPercentage(remnant.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(remnant.inValue)} / {transformDecimalInPercentage(remnant.inPercentage)}%</p>
                             </li>
                         </ul>
                     </li>
@@ -215,93 +222,103 @@ export default function Profile() {
                         <ul>
                             <li>
                                 <strong>Total de receitas:</strong>
-                                <p>R$ {baseIncome.inValue} / {transformDecimalInPercentage(baseIncome.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseIncome.inValue)} / {transformDecimalInPercentage(baseIncome.inPercentage)}%</p>
 
                                 <strong>Total de Gastos essenciais:</strong>
-                                <p>R$ {baseEssentialExpenses.inValue} / {transformDecimalInPercentage(baseEssentialExpenses.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseEssentialExpenses.inValue)} / {transformDecimalInPercentage(baseEssentialExpenses.inPercentage)}%</p>
 
                                 <strong>Total de Gastos Não essenciais:</strong>
-                                <p>R$ {baseNonEssentialExpenses.inValue} / {transformDecimalInPercentage(baseNonEssentialExpenses.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseNonEssentialExpenses.inValue)} / {transformDecimalInPercentage(baseNonEssentialExpenses.inPercentage)}%</p>
                             </li>
                             <li>
                                 <strong>Total de Investimentos:</strong>
-                                <p>R$ {baseInvestments.inValue} / {transformDecimalInPercentage(baseInvestments.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseInvestments.inValue)} / {transformDecimalInPercentage(baseInvestments.inPercentage)}%</p>
 
                                 <strong>Total de Gastos livres:</strong>
-                                <p>R$ {baseWaste.inValue} / {transformDecimalInPercentage(baseWaste.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseWaste.inValue)} / {transformDecimalInPercentage(baseWaste.inPercentage)}%</p>
                                 
                                 <strong>Restante</strong>
-                                <p>R$ {baseRemnant.inValue} / {transformDecimalInPercentage(baseRemnant.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseRemnant.inValue)} / {transformDecimalInPercentage(baseRemnant.inPercentage)}%</p>
                             </li>
                         </ul>
                     </li>
                 </ul>
             </div>
             <div>
+                <h1 id="title_finances_movements">Movimentos financeiros</h1>
+                <h3>Filtros</h3>
                 <form id="search-movements" onSubmit={searchMovements}>
-                    <div className="select-block">
-                        <label htmlFor={orderFilter}>Ordenar por</label>
-                        <select id={orderFilter} name="orderFilter" value={orderFilter} onChange={(e) => { setOrderFilter(e.target.value)}}>
-                            <option value="" disabled hidden>Selecione uma opção</option>
-                            {[
-                                { value: 'classification/asc', label: 'Classificação ordem crescente' },
-                                { value: 'classification/desc', label: 'Classificação ordem decrescente' },
-                                { value: 'name/asc', label: 'Nome ordem crescente' },
-                                { value: 'name/desc', label: 'Nome ordem decrescente' },
-                                { value: 'value/asc', label: 'Valor ordem crescente' },
-                                { value: 'value/desc', label: 'Valor ordem decrescente' },
-                            ].map(option => {
-                                return <option key={option.value} value={option.value}>{option.label}</option>
-                            })}
-                        </select>
-                    </div>
-                    <div className="select-block">
-                        <label htmlFor={classificationFilter}>Classificação</label>
-                        <select id={classificationFilter} name="classificationFilter" value={classificationFilter} onChange={(e) => { setClassificationFilter(e.target.value)}}>
-                            <option value="" disabled hidden>Selecione uma opção</option>
-                            {[
-                                { value: 'receita', label: 'Receita' },
-                                { value: 'gastos essenciais', label: 'Gastos essenciais' },
-                                { value: 'gastos não essenciais', label: 'Gastos não essenciais' },
-                                { value: 'investimentos', label: 'Investimentos' },
-                                { value: 'torrar', label: 'Torrar' },
-                            ].map(option => {
-                                return <option key={option.value} value={option.value}>{option.label}</option>
-                            })}
-                        </select>
-                    </div>
                     <div className="input-block">
                         <label htmlFor={nameFilter}>Nome</label>
                         <input type="text" id={nameFilter} onChange={(e) => { setNameFilter(e.target.value)}} />
                     </div>
-
-                    <button type="submit" className="button">
-                        Buscar
-                    </button>
-                    <button id="cleanup_filters" type="submit" onClick={() => setCleanUpFilters(true)} className="button">
-                        Limpar filtros
-                    </button>
+                    <div className="input-block">
+                        <label htmlFor={valueFilter}>Valor</label>
+                        <input type="text" id={valueFilter} onChange={(e) => { setValueFilter(e.target.value)}} />
+                    </div>
+                    <div className="search_buttons">
+                        <button id="button_filters" type="submit" className="button">
+                            Filtrar
+                        </button>
+                        <button id="cleanup_filters" type="submit" onClick={() => setCleanUpFilters(true)} className="button">
+                            Limpar
+                        </button>
+                    </div>
                 </form>
             </div>
             <div className="movements">
-                <ul>
-                    {movements.map(movement => (
-                        <li key={movement.id}>
-                            <strong>NOME:</strong>
-                            <p>{movement.name}</p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>
+                                NOME
+                                <button onClick={() => sortFilter('name', 'desc')} type="button">
+                                    <FiArrowDown size={16} color="#006B3F"/>
+                                </button>
+                                <button onClick={() => sortFilter('name', 'asc')} type="button">
+                                    <FiArrowUp size={16} color="#006B3F"/>
+                                </button>
+                            </th>
+                            <th>
+                                CLASSIFICAÇÃO
+                                <button onClick={() => sortFilter('classification', 'desc')} type="button">
+                                    <FiArrowDown size={16} color="#006B3F"/>
+                                </button>
+                                <button onClick={() => sortFilter('classification', 'asc')} type="button">
+                                    <FiArrowUp size={16} color="#006B3F"/>
+                                </button>
+                            </th>
+                            <th>
+                                VALOR
+                                <button onClick={() => sortFilter('value', 'desc')} type="button">
+                                    <FiArrowDown size={16} color="#006B3F"/>
+                                </button>
+                                <button onClick={() => sortFilter('value', 'asc')} type="button">
+                                    <FiArrowUp size={16} color="#006B3F"/>
+                                </button>
+                            </th>
+                            <th></th>
+                        </tr>
+                    </thead>
 
-                            <strong>CLASSIFICAÇÃO:</strong>
-                            <p>{movement.classification}</p>
-
-                            <strong>VALOR:</strong>
-                            <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(movement.value)}</p>
-                            
-                            <button onClick={() => handleDeleteMovement(movement.id)} type="button">
-                                <FiTrash2 size={20} color="#a8a8b3" />
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+                    <tbody>
+                        {movements.map(movement => (
+                            <tr key={movement.id}>
+                                <td className="name">{movement.name}</td>
+                                <td className="classification">{movement.classification}</td>
+                                <td>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(movement.value)}</td>
+                                <td>
+                                    {/* <button onClick={() => handleDeleteMovement(movement.id)} type="button">
+                                        <FiEdit2 size={20} color="#a8a8b3" />
+                                    </button> */}
+                                    <button onClick={() => handleDeleteMovement(movement.id)} type="button">
+                                        <FiTrash2 size={20} color="#a8a8b3" />
+                                    </button>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
             </div>
         </div>
     );
