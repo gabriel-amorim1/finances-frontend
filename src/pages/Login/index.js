@@ -60,8 +60,8 @@ export default function Login() {
                 <h1>O que vamos encontrar aqui?</h1>
                 <p>- Planilha Básica de orçamento</p>
                 <p>- Divisão Básica de Gastos</p>
-                <p>- Fundo de emergência</p>
-                <p>- Aposentadoria</p>
+                <p>- Como montar seu fundo de emergência</p>
+                <p>- Como calcular o valor necessário para Aposentadoria</p>
                 <p>- Checklist para decisões de alto impacto financeiro</p>
             </section>
         </div>
