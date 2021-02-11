@@ -25,20 +25,26 @@ export default function Register() {
                     email,
                     password,
                 };
-                
-                try{
-                    await api.post('/api/user', data);
-                    const response = await api.post('api/sessions/', {
-                        email,
-                        password,
-                    });
-    
-                    localStorage.setItem('userName', response.data.user.name);
-                    localStorage.setItem('token', response.data.token);
-    
-                    history.push('/profile');
-                }catch(err){
-                    alert('Erro no cadastro, tente novamente');
+                try {
+                    const userCreated = await api.post('/api/user', data);
+
+                    if (userCreated) {
+                        const response = await api.post('api/sessions/', {
+                            email,
+                            password,
+                        });
+        
+                        localStorage.setItem('userName', response.data.user.name);
+                        localStorage.setItem('token', response.data.token);
+        
+                        history.push('/profile');
+                    }
+                } catch (error) {
+                    if(error.message === 'Request failed with status code 400') {
+                        alert('Email já cadastrado');
+                    } else {
+                        alert('Erro no cadastro, tente novamente');
+                    }
                 }
             } else {
                 alert('A senha deve conter 6 ou mais caracteres');
@@ -46,7 +52,6 @@ export default function Register() {
         } else {
             alert('As senhas não coincidem, tente novamente');
         }
-        
     }
 
     return (
