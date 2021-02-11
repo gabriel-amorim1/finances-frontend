@@ -40,8 +40,13 @@ export default function Register() {
                         history.push('/profile');
                     }
                 } catch (error) {
-                    if(error.message === 'Request failed with status code 400') {
+                    if (
+                        error.response.data.code === 400
+                        && error.response.data.message === 'Email already registered.'
+                    ) {
                         alert('Email já cadastrado');
+                    } else if (error.response.data.code === 400) {
+                        alert('Por favor insira um email válido');
                     } else {
                         alert('Erro no cadastro, tente novamente');
                     }
