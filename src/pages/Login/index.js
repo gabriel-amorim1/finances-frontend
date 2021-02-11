@@ -27,7 +27,23 @@ export default function Login() {
 
             history.push('/profile');
         }catch(err){
-            alert('Falha no login, tente novamente');
+            if (
+                err.response.data.code === 404 
+                && err.response.data.message === 'Email not found'
+            ) {
+                alert('Endereço de email não cadastrado');
+            } else if (
+                err.response.data.code === 401
+                && err.response.data.message === 'Password does no match'
+            ) {
+                alert('Senha incorreta');
+            } else if (
+                err.response.data.code === 400
+            ) {
+                alert('Por favor insira um email válido');
+            } else {
+                alert('Falha no login, tente novamente');
+            }
         }
     }
 
