@@ -2,6 +2,8 @@ import React, { useState, useLayoutEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 
+import Modal from 'react-modal';
+
 import api from '../../services/api';
 import './styles.css';
 
@@ -11,17 +13,31 @@ export default function NewMovement() {
     const [name, setName] = useState('');
     const [classification, setClassification] = useState('');
     const [value, setValue] = useState('');
+    const [modalIsOpen,setIsOpen] = useState(false);
+    const [modalText, setModalText] = useState('');
+    const [modalNavigation, setModalNavigation] = useState('');
 
     const history = useHistory();
 
     const userToken = localStorage.getItem('token');
+    const firstMovement = localStorage.getItem('classification');
 
     useLayoutEffect(() => {
         if(!userToken) {
-            alert('A sessão expirou, por favor faça login novamente');
-            history.push('/');
+            setModalText('Sua sessão expirou, por favor faça login novamente!');
+            openModal();
+            setModalNavigation('/');
         }
-    }, [history, userToken]);
+        if (firstMovement) setClassification(firstMovement);
+    }, [history, userToken, firstMovement]);
+
+    function openModal() {
+        setIsOpen(true);
+    }
+
+    function closeModal() {
+        setIsOpen(false);
+    }
 
     async function handleNewMovement(e) {
         e.preventDefault();
@@ -32,24 +48,43 @@ export default function NewMovement() {
             value,
         };
 
-        try{
-            await api.post(
-                'api/financial-movement', 
-                data, 
-                {
-                    headers: {
-                    'Authorization': `Basic ${userToken}` 
+        if (!name || !classification || !value) {
+            setModalText('Por favor preencha todos os campos!');
+            setModalNavigation();
+            openModal();
+        } else {
+            try{
+                await api.post(
+                    'api/financial-movement', 
+                    data, 
+                    {
+                        headers: {
+                        'Authorization': `Basic ${userToken}` 
+                        }
                     }
-                }
-            );
-            history.push('/profile');
-        } catch (err) {
-            alert('Erro ao cadastrar movimento, tente novamente. ');
+                );
+                localStorage.setItem('classification', '');
+                history.push('/profile');
+            } catch (err) {
+                setModalText('Erro ao cadastrar movimento, tente novamente.');
+                setModalNavigation();
+                openModal();
+            }
         }
     }
 
     return (
         <div className="new-movement-container">
+            <Modal
+                isOpen={modalIsOpen}
+                id="modal"
+            >
+                <img src={logoImg} alt="Go To Million" />
+                <span>{modalText}</span>
+                <Link to={modalNavigation}>
+                    <button onClick={closeModal}>Ok</button>
+                </Link>
+            </Modal>
             <div className="content">
                 <section>
                     <img src={logoImg} alt="Go To Million" />
@@ -63,11 +98,13 @@ export default function NewMovement() {
                     </Link>
                 </section>
                 <form onSubmit={handleNewMovement}>
+                    <label className="form-label" htmlFor={name}>Nome</label>
                     <input 
-                        placeholder="Nome do movimento financeiro"
+                        placeholder="Ex.: Salário"
                         value={name}
                         onChange={e => setName(e.target.value)}
                      />
+                     <label className="form-label" htmlFor={classification}>Classificação</label>
                      <select id={classification} name="classification" value={classification} onChange={(e) => { setClassification(e.target.value)}}>
                         <option value="" disabled hidden>Escolha a classificação do movimento</option>
                         {[
@@ -80,8 +117,9 @@ export default function NewMovement() {
                             return <option key={option.value} value={option.value}>{option.label}</option>
                         })}
                     </select>
+                    <label className="form-label" htmlFor={value}>Valor</label>
                     <input 
-                        placeholder="Valor em reais"
+                        placeholder="Ex.: 1100"
                         value={value}
                         onChange={e => setValue(e.target.value)}
                      />

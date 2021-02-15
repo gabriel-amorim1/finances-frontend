@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiLogIn } from 'react-icons/fi';
+import Modal from 'react-modal';
 
 import api from '../../services/api';
 import './styles.css';
@@ -11,7 +12,18 @@ export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const history = useHistory();
+    const [modalIsOpen,setIsOpen] = useState(false);
+    const [modalText, setModalText] = useState('');
+    const [modalNavigation, setModalNavigation] = useState('');
 
+    function openModal() {
+        setIsOpen(true);
+    }
+
+    function closeModal() {
+        setIsOpen(false);
+    }
+    
     async function handleLogin(e){
         e.preventDefault();
         try{
@@ -31,35 +43,55 @@ export default function Login() {
                 err.response.data.code === 404 
                 && err.response.data.message === 'Email not found'
             ) {
-                alert('Endereço de email não cadastrado');
+                setModalText('Endereço de email não cadastrado');
+                setModalNavigation();
+                openModal();
             } else if (
                 err.response.data.code === 401
                 && err.response.data.message === 'Password does no match'
             ) {
-                alert('Senha incorreta');
+                setModalText('Senha incorreta');
+                setModalNavigation();
+                openModal();
             } else if (
                 err.response.data.code === 400
             ) {
-                alert('Por favor insira um email válido');
+                setModalText('Email inválido');
+                setModalNavigation();
+                openModal();
             } else {
-                alert('Falha no login, tente novamente');
+                setModalText('Falha no login, tente novamente');
+                setModalNavigation();
+                openModal();
             }
         }
     }
 
     return(
         <div className="login-container">
+            <Modal
+                isOpen={modalIsOpen}
+                id="modal"
+            >
+                <img src={logoImg} alt="Go To Million" />
+                <span>{modalText}</span>
+                <Link to={modalNavigation}>
+                    <button onClick={closeModal}>Ok</button>
+                </Link>
+            </Modal>
             <section className="form">
                 <img src={logoImg} alt="Go To Million" />
                 <form onSubmit={handleLogin}>
                     <h1>Faça seu login</h1>
+                    <label className="form-label" htmlFor={email}>Email</label>
                     <input 
-                        placeholder="Seu Email"
+                        placeholder="usuario@mail.com"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
                      />
+                     <label className="form-label" htmlFor={password}>Senha</label>
                      <input 
-                        placeholder="Sua Senha"
+                        placeholder="Insira sua senha"
                         type="password"
                         value={password}
                         onChange={e => setPassword(e.target.value)}

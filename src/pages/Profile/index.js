@@ -1,7 +1,7 @@
 import React, { useState, useLayoutEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiPower, FiTrash2, FiArrowDown, FiArrowUp } from 'react-icons/fi';
-
+import Modal from 'react-modal';
 import api from '../../services/api';
 import './styles.css';
 
@@ -21,20 +21,23 @@ export default function Profile() {
     const [baseInvestments, setBaseInvestments] = useState({});
     const [baseWaste, setBaseWaste] = useState({});
     const [baseRemnant, setBaseRemnant] = useState({});
+    const [modalIsOpen,setIsOpen] = useState(false);
+    const [modalText, setModalText] = useState('');
+    const [modalNavigation, setModalNavigation] = useState('');
 
     const [nameFilter, setNameFilter] = useState('');
     const [valueFilter, setValueFilter] = useState('');
     const [cleanUpFilters, setCleanUpFilters] = useState(false);
     const history = useHistory();
 
-    const userId = localStorage.getItem('userId');
     const userName = localStorage.getItem('userName');
     const userToken = localStorage.getItem('token');
 
     useLayoutEffect(() => {
         if(!userToken) {
-            alert('A sessão expirou, por favor faça login novamente');
-            history.push('/');
+            setModalText('A sessão expirou, por favor faça login novamente');
+            setModalNavigation('/');
+            openModal();
         } else {
             api.get('api/spending-division/', {
                 headers: {
@@ -55,8 +58,21 @@ export default function Profile() {
                     ...response.data.waste.financial_movements,
                 ]);
             }).catch(error => {
-                alert('Esse usuário não possui movimento financeiro do tipo receita ainda, favor cadastrar');
-                history.push('/financial-movement/new');
+                console.log()
+                if (
+                    error.response.data.code === 400 
+                    && error.response.data.message === 'This User has no financial movements registered yet.'
+                ) {
+                    localStorage.setItem('classification', 'RECEITAS');
+                    setModalText('Você ainda não possui nenhum movimento financeiro do tipo RECEITA cadastrado, por favor cadastre.');
+                    setModalNavigation('/financial-movement/new');
+                    openModal();
+                } else {
+                    localStorage.setItem('classification', 'RECEITAS');
+                    setModalText('Não foi possível carregar dados do usuário, por favor tente novamente.');
+                    setModalNavigation('/profile');
+                    openModal();
+                }
             })
             api.get('api/spending-division/base/', {
                 headers: {
@@ -124,7 +140,9 @@ export default function Profile() {
                 })
             }
         } catch (error) {
-            alert('Erro ao filtrar movimentos, tente novamente.');
+            setModalText('Erro ao filtrar movimentos, tente novamente.');
+            setModalNavigation();
+            openModal();
         }
     }
 
@@ -153,12 +171,17 @@ export default function Profile() {
                 }
             });
             setMovements(movements.filter(movement => movement.id !== id));
-            api.get('api/spending-division/' + userId).then(response => {
+            api.get('api/spending-division/', {
+                headers: {
+                'Authorization': `Basic ${userToken}` 
+                }
+            }).then(response => {
                 setIncome(response.data.income);
                 setEssentialExpenses(response.data.essentialExpenses);
                 setNonEssentialExpenses(response.data.nonEssentialExpenses);
                 setInvestments(response.data.investments);
                 setWaste(response.data.waste);
+                setRemnant(response.data.remnant);
                 setMovements([
                     ...response.data.income.financial_movements, 
                     ...response.data.essentialExpenses.financial_movements, 
@@ -166,15 +189,51 @@ export default function Profile() {
                     ...response.data.investments.financial_movements, 
                     ...response.data.waste.financial_movements,
                 ]);
-            })
+            }).catch(error => {
+                if (
+                    error.response.data.code === 400 
+                    && error.response.data.message === 'This User has no financial movements registered yet.'
+                ) {
+                    localStorage.setItem('classification', 'RECEITAS');
+                    setModalText('Você ainda não possui nenhum movimento financeiro do tipo RECEITA cadastrado, por favor cadastre.');
+                    setModalNavigation('/financial-movement/new');
+                    openModal();
+                } else {
+                    localStorage.setItem('classification', 'RECEITAS');
+                    setModalText('Não foi possível carregar dados do usuário, por favor tente novamente.');
+                    setModalNavigation('/profile');
+                    openModal();
+                }
+            });
+            api.get('api/spending-division/base/', {
+                headers: {
+                'Authorization': `Basic ${userToken}` 
+                }
+            }).then(response => {
+                setBaseIncome(response.data.income);
+                setBaseEssentialExpenses(response.data.essentialExpenses);
+                setBaseNonEssentialExpenses(response.data.nonEssentialExpenses);
+                setBaseInvestments(response.data.investments);
+                setBaseWaste(response.data.waste);
+                setBaseRemnant(response.data.remnant);
+            });
         } catch (err) {
-            alert('Erro ao deletar movimento, tente novamente.');
+            setModalText('Erro ao deletar movimento, tente novamente.');
+            setModalNavigation();
+            openModal();
         }
+    }
+
+    function openModal() {
+        setIsOpen(true);
+    }
+
+    function closeModal() {
+        setIsOpen(false);
     }
 
     function handleLogout(){
         localStorage.clear();
-
         history.push('/');
     }
 
@@ -189,6 +248,16 @@ export default function Profile() {
                     <FiPower size={18} color="#006B3F" />
                 </button>
             </header>
+            <Modal
+                isOpen={modalIsOpen}
+                id="modal"
+            >
+                <img src={logoImg} alt="Go To Million" />
+                <span>{modalText}</span>
+                <Link to={modalNavigation}>
+                    <button onClick={closeModal}>Ok</button>
+                </Link>
+            </Modal>
             <div className="spending-division">
                 <h1>Divisão de gastos</h1>
                 <ul>
