@@ -2,6 +2,8 @@ import React, { useState, useLayoutEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiPower, FiTrash2, FiArrowDown, FiArrowUp } from 'react-icons/fi';
 import Modal from 'react-modal';
+import ReactTooltip from 'react-tooltip';
+
 import api from '../../services/api';
 import './styles.css';
 
@@ -244,8 +246,9 @@ export default function Profile() {
                 <span>Bem vindo(a), {userName}</span>
 
                 <Link className="button" to="/financial-movement/new">Cadastrar novo movimento</Link>
-                <button onClick={handleLogout} type="button">
-                    <FiPower size={18} color="#006B3F" />
+                <button onClick={handleLogout} type="button" alt="Botão de logout" data-tip="Fazer logout">
+                    <ReactTooltip />
+                    <FiPower size={18} color="#006B3F"/>
                 </button>
             </header>
             <Modal
@@ -342,28 +345,34 @@ export default function Profile() {
                             <th>
                                 NOME
                                 <button onClick={() => sortFilter('name', 'desc')} type="button">
-                                    <FiArrowDown size={16} color="#006B3F"/>
+                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por nome de forma decrescente"/>
+                                    <ReactTooltip />
                                 </button>
                                 <button onClick={() => sortFilter('name', 'asc')} type="button">
-                                    <FiArrowUp size={16} color="#006B3F"/>
+                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por nome de forma crescente"/>
+                                    <ReactTooltip />
                                 </button>
                             </th>
                             <th>
                                 CLASSIFICAÇÃO
                                 <button onClick={() => sortFilter('classification', 'desc')} type="button">
-                                    <FiArrowDown size={16} color="#006B3F"/>
+                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por classificação de forma decrescente"/>
+                                    <ReactTooltip />
                                 </button>
                                 <button onClick={() => sortFilter('classification', 'asc')} type="button">
-                                    <FiArrowUp size={16} color="#006B3F"/>
+                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por classificação de forma crescente"/>
+                                    <ReactTooltip />
                                 </button>
                             </th>
                             <th>
                                 VALOR
                                 <button onClick={() => sortFilter('value', 'desc')} type="button">
-                                    <FiArrowDown size={16} color="#006B3F"/>
+                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por valor de forma decrescente"/>
+                                    <ReactTooltip />
                                 </button>
                                 <button onClick={() => sortFilter('value', 'asc')} type="button">
-                                    <FiArrowUp size={16} color="#006B3F"/>
+                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por valor de forma crescente"/>
+                                    <ReactTooltip />
                                 </button>
                             </th>
                             <th></th>
@@ -381,7 +390,8 @@ export default function Profile() {
                                         <FiEdit2 size={20} color="#a8a8b3" />
                                     </button> */}
                                     <button onClick={() => handleDeleteMovement(movement.id)} type="button">
-                                        <FiTrash2 size={20} color="#a8a8b3" />
+                                        <FiTrash2 size={20} color="#a8a8b3" alt="Botão de excluir movimento" data-tip="Excluir movimento"/>
+                                        <ReactTooltip />
                                     </button>
                                 </td>
                             </tr>
