@@ -1,8 +1,9 @@
 import React, { useState, useLayoutEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import { FiPower, FiTrash2, FiArrowDown, FiArrowUp } from 'react-icons/fi';
+import { FiPower, FiTrash2, FiArrowDown, FiArrowUp, FiEdit2 } from 'react-icons/fi';
 import Modal from 'react-modal';
 import ReactTooltip from 'react-tooltip';
+import Button from 'react-bootstrap-button-loader';
 
 import api from '../../services/api';
 import './styles.css';
@@ -25,9 +26,15 @@ export default function Profile() {
     const [baseRemnant, setBaseRemnant] = useState({});
     const [modalIsOpen,setIsOpen] = useState(false);
     const [modalToConfirmIsOpen,setToConfirmIsOpen] = useState(false);
+    const [modalToEditIsOpen,setToEditIsOpen] = useState(false);
     const [modalText, setModalText] = useState('');
     const [modalNavigation, setModalNavigation] = useState('');
     const [movementIdToRemove, setMovementIdToRemove] = useState('');
+    const [movementIdToEdit, setMovementIdToEdit] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [nameToEdit, setNameToEdit] = useState('');
+    const [classificationToEdit, setClassificationToEdit] = useState('');
+    const [valueToEdit, setValueToEdit] = useState('');
 
     const [nameFilter, setNameFilter] = useState('');
     const [valueFilter, setValueFilter] = useState('');
@@ -65,14 +72,14 @@ export default function Profile() {
                 console.log()
                 if (
                     error.response.data.code === 400 
-                    && error.response.data.message === 'This User has no financial movements registered yet.'
+                    && (error.response.data.message === 'This User has no financial movements registered yet.'
+                    || 'This User has no financial movements as "RECEITAS" registered yet.')
                 ) {
                     localStorage.setItem('classification', 'RECEITAS');
                     setModalText('Você ainda não possui nenhum movimento financeiro do tipo RECEITA cadastrado, por favor cadastre.');
                     setModalNavigation('/financial-movement/new');
                     openModal();
                 } else {
-                    localStorage.setItem('classification', 'RECEITAS');
                     setModalText('Não foi possível carregar dados do usuário, por favor tente novamente.');
                     setModalNavigation('/profile');
                     openModal();
@@ -117,6 +124,8 @@ export default function Profile() {
         try {
             let url = 'api/financial-movement?';
             if(cleanUpFilters) {
+                setNameFilter('');
+                setValueFilter('');
                 await api.get(url, {
                     headers: {
                     'Authorization': `Basic ${userToken}` 
@@ -126,8 +135,6 @@ export default function Profile() {
                         ...response.data.data
                     ]);
                     setCleanUpFilters(false);
-                    setNameFilter('');
-                    setValueFilter('');
                 })
             } else {
                 if (nameFilter) url += '&name=' + nameFilter;
@@ -167,6 +174,92 @@ export default function Profile() {
         }
     }
 
+    async function handleEditMovement() {
+        setLoading(true);
+        console.log("chegou")
+
+        if (!movementIdToEdit || !nameToEdit || !classificationToEdit || !valueToEdit) {
+            setModalText('Por favor preencha todos os campos!');
+            setModalNavigation();
+            openModal();
+        } else {
+            console.log(valueToEdit)
+            const data = {
+                name: nameToEdit,
+                classification: classificationToEdit,
+                value: valueToEdit.toString().replace(',', '.'),
+            };
+            try{
+                await api.put(
+                    'api/financial-movement/' + movementIdToEdit, 
+                    data, 
+                    {
+                        headers: {
+                        'Authorization': `Basic ${userToken}` 
+                        }
+                    }
+                );
+                api.get('api/spending-division/', {
+                    headers: {
+                    'Authorization': `Basic ${userToken}` 
+                    }
+                }).then(response => {
+                    setIncome(response.data.income);
+                    setEssentialExpenses(response.data.essentialExpenses);
+                    setNonEssentialExpenses(response.data.nonEssentialExpenses);
+                    setInvestments(response.data.investments);
+                    setWaste(response.data.waste);
+                    setRemnant(response.data.remnant);
+                    setMovements([
+                        ...response.data.income.financial_movements, 
+                        ...response.data.essentialExpenses.financial_movements, 
+                        ...response.data.nonEssentialExpenses.financial_movements, 
+                        ...response.data.investments.financial_movements, 
+                        ...response.data.waste.financial_movements,
+                    ]);
+                }).catch(error => {
+                    setMovementIdToRemove('');
+                    if (
+                        error.response.data.code === 400 
+                        && (error.response.data.message === 'This User has no financial movements registered yet.'
+                        || 'This User has no financial movements as "RECEITAS" registered yet.')
+                    ) {
+                        localStorage.setItem('classification', 'RECEITAS');
+                        setModalText('Você ainda não possui nenhum movimento financeiro do tipo RECEITA cadastrado, por favor cadastre.');
+                        setModalNavigation('/financial-movement/new');
+                        openModal();
+                    } else {
+                        setModalText('Não foi possível carregar dados do usuário, por favor tente novamente.');
+                        setModalNavigation('/profile');
+                        openModal();
+                    }
+                });
+                api.get('api/spending-division/base/', {
+                    headers: {
+                    'Authorization': `Basic ${userToken}` 
+                    }
+                }).then(response => {
+                    setBaseIncome(response.data.income);
+                    setBaseEssentialExpenses(response.data.essentialExpenses);
+                    setBaseNonEssentialExpenses(response.data.nonEssentialExpenses);
+                    setBaseInvestments(response.data.investments);
+                    setBaseWaste(response.data.waste);
+                    setBaseRemnant(response.data.remnant);
+                });
+
+                setLoading(false);
+
+                history.push('/profile');
+            } catch (err) {
+                setModalText('Erro ao editar movimento, tente novamente.');
+                setModalNavigation();
+                openModal();
+            }
+            setLoading(false);
+            setToEditIsOpen(false);
+        }
+    }
+
     async function handleDeleteMovement() {
         setToConfirmIsOpen(false);
         try{
@@ -198,14 +291,14 @@ export default function Profile() {
                 setMovementIdToRemove('');
                 if (
                     error.response.data.code === 400 
-                    && error.response.data.message === 'This User has no financial movements registered yet.'
+                    && (error.response.data.message === 'This User has no financial movements registered yet.'
+                    || 'This User has no financial movements as "RECEITAS" registered yet.')
                 ) {
                     localStorage.setItem('classification', 'RECEITAS');
                     setModalText('Você ainda não possui nenhum movimento financeiro do tipo RECEITA cadastrado, por favor cadastre.');
                     setModalNavigation('/financial-movement/new');
                     openModal();
                 } else {
-                    localStorage.setItem('classification', 'RECEITAS');
                     setModalText('Não foi possível carregar dados do usuário, por favor tente novamente.');
                     setModalNavigation('/profile');
                     openModal();
@@ -241,10 +334,20 @@ export default function Profile() {
         setToConfirmIsOpen(true);
     }
 
+    function openModalToEdit(movement) {
+        setMovementIdToEdit(movement.id);
+        setNameToEdit(movement.name);
+        setClassificationToEdit(movement.classification);
+        setValueToEdit(movement.value);
+        setModalText('Editar movimento financeiro');
+        setToEditIsOpen(true);
+    }
+
     function closeModal() {
         setMovementIdToRemove('');
         setIsOpen(false);
         setToConfirmIsOpen(false);
+        setToEditIsOpen(false);
     }
 
     function handleLogout(){
@@ -267,6 +370,7 @@ export default function Profile() {
             <Modal
                 isOpen={modalIsOpen}
                 id="modal-to-alert"
+                ariaHideApp={false}
             >
                 <img src={logoImg} alt="Go To Million" />
                 <span>{modalText}</span>
@@ -335,11 +439,11 @@ export default function Profile() {
                 <form id="search-movements" onSubmit={searchMovements}>
                     <div className="input-block">
                         <label htmlFor={nameFilter}>Nome</label>
-                        <input type="text" id={nameFilter} onChange={(e) => { setNameFilter(e.target.value)}} />
+                        <input type="text" value={nameFilter} onChange={(e) => { setNameFilter(e.target.value)}} />
                     </div>
                     <div className="input-block">
                         <label htmlFor={valueFilter}>Valor</label>
-                        <input type="text" id={valueFilter} onChange={(e) => { setValueFilter(e.target.value)}} />
+                        <input type="text" value={valueFilter} onChange={(e) => { setValueFilter(e.target.value)}} />
                     </div>
                     <div className="search_buttons">
                         <button id="button_filters" type="submit" className="button">
@@ -392,8 +496,49 @@ export default function Profile() {
                         </tr>
                     </thead>
                     <Modal
+                        isOpen={modalToEditIsOpen}
+                        id="modal-to-edit"
+                        ariaHideApp={false}
+                    >
+                        <img src={logoImg} alt="Go To Million" />
+                        <span>{modalText}</span>
+                        <form onSubmit={handleEditMovement}>
+                            <label className="form-label" htmlFor={nameToEdit}>Nome</label>
+                            <input 
+                                placeholder="Ex.: Salário"
+                                value={nameToEdit}
+                                onChange={e => setNameToEdit(e.target.value)}
+                            />
+                            <label className="form-label" htmlFor={classificationToEdit}>Classificação</label>
+                            <select id={classificationToEdit} name="classificationToEdit" value={classificationToEdit} onChange={(e) => { setClassificationToEdit(e.target.value)}}>
+                                <option value="" disabled hidden>Escolha a classificação do movimento</option>
+                                {[
+                                    { value: 'RECEITAS', label: 'Receita' },
+                                    { value: 'GASTOS ESSENCIAIS', label: 'Gastos essenciais' },
+                                    { value: 'GASTOS NAO ESSENCIAIS', label: 'Gastos não essenciais' },
+                                    { value: 'INVESTIMENTOS', label: 'Investimentos' },
+                                    { value: 'GASTOS LIVRES', label: 'Gastos livres' },
+                                ].map(option => {
+                                    return <option key={option.value} value={option.value}>{option.label}</option>
+                                })}
+                            </select>
+                            <label className="form-label" htmlFor={valueToEdit}>Valor</label>
+                            <input 
+                                placeholder="Ex.: 1100"
+                                value={valueToEdit}
+                                onChange={e => setValueToEdit(e.target.value)}
+                            />
+                            
+                        </form>
+                        <div>
+                            <button className="cancel-modal-button" onClick={() => closeModal()}>Cancelar</button>
+                            <Button className="button" onClick={() => handleEditMovement()} loading={loading}>Editar</Button>
+                        </div>
+                    </Modal>
+                    <Modal
                         isOpen={modalToConfirmIsOpen}
                         id="modal-to-confirm"
+                        ariaHideApp={false}
                     >
                         <img src={logoImg} alt="Go To Million" />
                         <span>{modalText}</span>
@@ -409,9 +554,9 @@ export default function Profile() {
                                 <td className="classification">{movement.classification}</td>
                                 <td>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(movement.value)}</td>
                                 <td>
-                                    {/* <button onClick={() => handleDeleteMovement(movement.id)} type="button">
+                                    <button onClick={() => openModalToEdit(movement)} type="button">
                                         <FiEdit2 size={20} color="#a8a8b3" />
-                                    </button> */}
+                                    </button>
                                     <button onClick={() => openModalToConfirm(movement.id)} type="button">
                                         <FiTrash2 size={20} color="#a8a8b3" alt="Botão de excluir movimento" data-tip="Excluir movimento"/>
                                         <ReactTooltip place="bottom"/>
