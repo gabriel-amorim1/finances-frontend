@@ -247,7 +247,7 @@ export default function Profile() {
 
                 <Link className="button" to="/financial-movement/new">Cadastrar novo movimento</Link>
                 <button onClick={handleLogout} type="button" alt="Botão de logout" data-tip="Fazer logout">
-                    <ReactTooltip />
+                    <ReactTooltip place="bottom"/>
                     <FiPower size={18} color="#006B3F"/>
                 </button>
             </header>
@@ -346,33 +346,33 @@ export default function Profile() {
                                 NOME
                                 <button onClick={() => sortFilter('name', 'desc')} type="button">
                                     <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por nome de forma decrescente"/>
-                                    <ReactTooltip />
+                                    <ReactTooltip place="bottom"/>
                                 </button>
                                 <button onClick={() => sortFilter('name', 'asc')} type="button">
                                     <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por nome de forma crescente"/>
-                                    <ReactTooltip />
+                                    <ReactTooltip place="bottom"/>
                                 </button>
                             </th>
                             <th>
                                 CLASSIFICAÇÃO
                                 <button onClick={() => sortFilter('classification', 'desc')} type="button">
                                     <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por classificação de forma decrescente"/>
-                                    <ReactTooltip />
+                                    <ReactTooltip place="bottom"/>
                                 </button>
                                 <button onClick={() => sortFilter('classification', 'asc')} type="button">
                                     <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por classificação de forma crescente"/>
-                                    <ReactTooltip />
+                                    <ReactTooltip place="bottom"/>
                                 </button>
                             </th>
                             <th>
                                 VALOR
                                 <button onClick={() => sortFilter('value', 'desc')} type="button">
                                     <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por valor de forma decrescente"/>
-                                    <ReactTooltip />
+                                    <ReactTooltip place="bottom"/>
                                 </button>
                                 <button onClick={() => sortFilter('value', 'asc')} type="button">
                                     <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por valor de forma crescente"/>
-                                    <ReactTooltip />
+                                    <ReactTooltip place="bottom"/>
                                 </button>
                             </th>
                             <th></th>
@@ -391,7 +391,7 @@ export default function Profile() {
                                     </button> */}
                                     <button onClick={() => handleDeleteMovement(movement.id)} type="button">
                                         <FiTrash2 size={20} color="#a8a8b3" alt="Botão de excluir movimento" data-tip="Excluir movimento"/>
-                                        <ReactTooltip />
+                                        <ReactTooltip place="bottom"/>
                                     </button>
                                 </td>
                             </tr>
