@@ -45,17 +45,16 @@ export default function NewMovement() {
         e.preventDefault();
         setLoading(true);
 
-        const data = {
-            name,
-            classification,
-            value,
-        };
-
         if (!name || !classification || !value) {
             setModalText('Por favor preencha todos os campos!');
             setModalNavigation();
             openModal();
         } else {
+            const data = {
+                name,
+                classification,
+                value: value.replace(',', '.'),
+            };
             try{
                 await api.post(
                     'api/financial-movement', 
