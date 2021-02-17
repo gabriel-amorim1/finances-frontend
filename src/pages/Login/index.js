@@ -77,7 +77,7 @@ export default function Login() {
         <div className="login-container">
             <Modal
                 isOpen={modalIsOpen}
-                id="modal"
+                id="modal-to-alert"
             >
                 <img src={logoImg} alt="Go To Million" />
                 <span>{modalText}</span>

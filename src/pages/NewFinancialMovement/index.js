@@ -85,7 +85,7 @@ export default function NewMovement() {
         <div className="new-movement-container">
             <Modal
                 isOpen={modalIsOpen}
-                id="modal"
+                id="modal-to-alert"
             >
                 <img src={logoImg} alt="Go To Million" />
                 <span>{modalText}</span>

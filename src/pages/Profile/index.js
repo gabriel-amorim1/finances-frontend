@@ -24,8 +24,10 @@ export default function Profile() {
     const [baseWaste, setBaseWaste] = useState({});
     const [baseRemnant, setBaseRemnant] = useState({});
     const [modalIsOpen,setIsOpen] = useState(false);
+    const [modalToConfirmIsOpen,setToConfirmIsOpen] = useState(false);
     const [modalText, setModalText] = useState('');
     const [modalNavigation, setModalNavigation] = useState('');
+    const [movementIdToRemove, setMovementIdToRemove] = useState('');
 
     const [nameFilter, setNameFilter] = useState('');
     const [valueFilter, setValueFilter] = useState('');
@@ -165,14 +167,15 @@ export default function Profile() {
         }
     }
 
-    async function handleDeleteMovement(id) {
+    async function handleDeleteMovement() {
+        setToConfirmIsOpen(false);
         try{
-            await api.delete('api/financial-movement/' + id, {
+            await api.delete('api/financial-movement/' + movementIdToRemove, {
                 headers: {
                     'Authorization': `Basic ${userToken}` 
                 }
             });
-            setMovements(movements.filter(movement => movement.id !== id));
+            setMovements(movements.filter(movement => movement.id !== movementIdToRemove));
             api.get('api/spending-division/', {
                 headers: {
                 'Authorization': `Basic ${userToken}` 
@@ -192,6 +195,7 @@ export default function Profile() {
                     ...response.data.waste.financial_movements,
                 ]);
             }).catch(error => {
+                setMovementIdToRemove('');
                 if (
                     error.response.data.code === 400 
                     && error.response.data.message === 'This User has no financial movements registered yet.'
@@ -224,14 +228,23 @@ export default function Profile() {
             setModalNavigation();
             openModal();
         }
+        setMovementIdToRemove('');
     }
 
     function openModal() {
         setIsOpen(true);
     }
 
+    function openModalToConfirm(id) {
+        setMovementIdToRemove(id);
+        setModalText('Tem certeza que deseja excluir esse movimento?');
+        setToConfirmIsOpen(true);
+    }
+
     function closeModal() {
+        setMovementIdToRemove('');
         setIsOpen(false);
+        setToConfirmIsOpen(false);
     }
 
     function handleLogout(){
@@ -253,7 +266,7 @@ export default function Profile() {
             </header>
             <Modal
                 isOpen={modalIsOpen}
-                id="modal"
+                id="modal-to-alert"
             >
                 <img src={logoImg} alt="Go To Million" />
                 <span>{modalText}</span>
@@ -378,7 +391,17 @@ export default function Profile() {
                             <th></th>
                         </tr>
                     </thead>
-
+                    <Modal
+                        isOpen={modalToConfirmIsOpen}
+                        id="modal-to-confirm"
+                    >
+                        <img src={logoImg} alt="Go To Million" />
+                        <span>{modalText}</span>
+                        <div>
+                            <button className="cancel-modal-button" onClick={() => closeModal()}>Não</button>
+                            <button onClick={() => handleDeleteMovement()}>Sim</button>
+                        </div>
+                    </Modal>
                     <tbody>
                         {movements.map(movement => (
                             <tr key={movement.id}>
@@ -389,7 +412,7 @@ export default function Profile() {
                                     {/* <button onClick={() => handleDeleteMovement(movement.id)} type="button">
                                         <FiEdit2 size={20} color="#a8a8b3" />
                                     </button> */}
-                                    <button onClick={() => handleDeleteMovement(movement.id)} type="button">
+                                    <button onClick={() => openModalToConfirm(movement.id)} type="button">
                                         <FiTrash2 size={20} color="#a8a8b3" alt="Botão de excluir movimento" data-tip="Excluir movimento"/>
                                         <ReactTooltip place="bottom"/>
                                     </button>

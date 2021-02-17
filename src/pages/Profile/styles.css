@@ -214,7 +214,7 @@ h3 {
     color: #A8A8B3;
 }
 
-#modal {
+#modal-to-alert {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -230,7 +230,7 @@ h3 {
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
 }
 
-#modal span {
+#modal-to-alert span {
     font-family: Roboto;
     font-style: normal;
     font-weight: bold;
@@ -242,11 +242,11 @@ h3 {
     color: #000000;
 }
 
-#modal img {
+#modal-to-alert img {
     height: 80px;
 }
 
-#modal button {
+#modal-to-alert button {
     color: #FFFFFF;
     background: #006B3F;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
@@ -259,6 +259,60 @@ h3 {
     margin: 20px 0px;
 }
 
-#modal button:hover {
+#modal-to-alert button:hover {
     filter: brightness(90%);
+}
+
+#modal-to-confirm {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: 45%;
+    width: 35%;
+    background: #F0F0F5;
+    border-radius: 20px;
+    margin: 0;
+    top: 50%;
+    transform: translate(85%, 45%);
+    border: 0;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+#modal-to-confirm span {
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 33px;
+    text-align: center;
+    margin: 45px 55px;
+
+    color: #000000;
+}
+
+#modal-to-confirm img {
+    height: 80px;
+}
+
+#modal-to-confirm button {
+    color: #FFFFFF;
+    background: #006B3F;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    width: 200px;
+    height: 60px;
+    transition: filter 0.2s;
+    text-decoration: none;
+    border: 0;
+    margin: 20px 10px;
+}
+
+#modal-to-confirm button:hover {
+    filter: brightness(90%);
+}
+
+#modal-to-confirm .cancel-modal-button {
+    color: #AF0A26;
+    background: #FFFFFF;
 }

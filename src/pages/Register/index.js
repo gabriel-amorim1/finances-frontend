@@ -96,7 +96,7 @@ export default function Register() {
         <div className="register-container">
             <Modal
                 isOpen={modalIsOpen}
-                id="modal"
+                id="modal-to-alert"
             >
                 <img src={logoImg} alt="Go To Million" />
                 <span>{modalText}</span>
