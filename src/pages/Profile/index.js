@@ -131,7 +131,7 @@ export default function Profile() {
                 })
             } else {
                 if (nameFilter) url += '&name=' + nameFilter;
-                if (valueFilter) url += '&value=' + valueFilter;
+                if (valueFilter) url += '&value=' + valueFilter.replace(',', '.');
 
                 await api.get(url, {
                     headers: {
