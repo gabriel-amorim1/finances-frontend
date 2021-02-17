@@ -555,7 +555,8 @@ export default function Profile() {
                                 <td>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(movement.value)}</td>
                                 <td>
                                     <button onClick={() => openModalToEdit(movement)} type="button">
-                                        <FiEdit2 size={20} color="#a8a8b3" />
+                                        <FiEdit2 size={20} color="#a8a8b3" alt="Botão de editar movimento" data-tip="Editar movimento"/>
+                                        <ReactTooltip place="bottom"/>
                                     </button>
                                     <button onClick={() => openModalToConfirm(movement.id)} type="button">
                                         <FiTrash2 size={20} color="#a8a8b3" alt="Botão de excluir movimento" data-tip="Excluir movimento"/>
