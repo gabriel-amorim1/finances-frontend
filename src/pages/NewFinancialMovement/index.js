@@ -1,6 +1,7 @@
 import React, { useState, useLayoutEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
+import Button from 'react-bootstrap-button-loader';
 
 import Modal from 'react-modal';
 
@@ -16,6 +17,7 @@ export default function NewMovement() {
     const [modalIsOpen,setIsOpen] = useState(false);
     const [modalText, setModalText] = useState('');
     const [modalNavigation, setModalNavigation] = useState('');
+    const [loading, setLoading] = useState(false);
 
     const history = useHistory();
 
@@ -41,6 +43,7 @@ export default function NewMovement() {
 
     async function handleNewMovement(e) {
         e.preventDefault();
+        setLoading(true);
 
         const data = {
             name,
@@ -63,13 +66,18 @@ export default function NewMovement() {
                         }
                     }
                 );
+
                 localStorage.setItem('classification', '');
+
+                setLoading(false);
+
                 history.push('/profile');
             } catch (err) {
                 setModalText('Erro ao cadastrar movimento, tente novamente.');
                 setModalNavigation();
                 openModal();
             }
+            setLoading(false);
         }
     }
 
@@ -123,7 +131,7 @@ export default function NewMovement() {
                         value={value}
                         onChange={e => setValue(e.target.value)}
                      />
-                    <button className="button" type="submit">Cadastrar</button>
+                    <Button className="button" type="submit" loading={loading}>Cadastrar</Button>
                 </form>
             </div>
         </div>

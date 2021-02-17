@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiArrowLeft } from 'react-icons/fi';
 import Modal from 'react-modal';
+import Button from 'react-bootstrap-button-loader';
 
 import api from '../../services/api';
 import './styles.css'
@@ -16,6 +17,7 @@ export default function Register() {
     const [modalIsOpen,setIsOpen] = useState(false);
     const [modalText, setModalText] = useState('');
     const [modalNavigation, setModalNavigation] = useState('');
+    const [loading, setLoading] = useState(false);
     
     const history = useHistory();
 
@@ -29,6 +31,7 @@ export default function Register() {
 
     async function handleRegister(e){
         e.preventDefault();
+        setLoading(true);
         if (name && email && password && confirmPassword) {
             if (password === confirmPassword) {
                 if(password.length >= 6) {
@@ -45,10 +48,12 @@ export default function Register() {
                                 email,
                                 password,
                             });
-            
+
                             localStorage.setItem('userName', response.data.user.name);
                             localStorage.setItem('token', response.data.token);
-            
+                            
+                            setLoading(false);
+                            
                             history.push('/profile');
                         }
                     } catch (error) {
@@ -84,6 +89,7 @@ export default function Register() {
             setModalNavigation();
             openModal();
         }
+        setLoading(false);
     }
 
     return (
@@ -137,7 +143,7 @@ export default function Register() {
                         value={confirmPassword}
                         onChange={e => setConfirmPassword(e.target.value)}
                     />
-                    <button className="button" type="submit">Cadastrar</button>
+                    <Button className="button" type="submit" loading={loading}>Cadastrar</Button>
                 </form>
             </div>
         </div>

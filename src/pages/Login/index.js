@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useHistory } from 'react-router-dom';
 import { FiLogIn } from 'react-icons/fi';
 import Modal from 'react-modal';
+import Button from 'react-bootstrap-button-loader';
 
 import api from '../../services/api';
 import './styles.css';
@@ -15,6 +16,7 @@ export default function Login() {
     const [modalIsOpen,setIsOpen] = useState(false);
     const [modalText, setModalText] = useState('');
     const [modalNavigation, setModalNavigation] = useState('');
+    const [loading, setLoading] = useState(false);
 
     function openModal() {
         setIsOpen(true);
@@ -26,16 +28,19 @@ export default function Login() {
     
     async function handleLogin(e){
         e.preventDefault();
+        setLoading(true);
         try{
             const data = {
                 email,
                 password,
             };
-
+            
             const response = await api.post('api/sessions/', data);
-
+            
             localStorage.setItem('userName', response.data.user.name);
             localStorage.setItem('token', response.data.token);
+
+            setLoading(false);
 
             history.push('/profile');
         }catch(err){
@@ -65,6 +70,7 @@ export default function Login() {
                 openModal();
             }
         }
+        setLoading(false);
     }
 
     return(
@@ -88,16 +94,15 @@ export default function Login() {
                         placeholder="Ex.: usuario@mail.com"
                         value={email}
                         onChange={e => setEmail(e.target.value)}
-                     />
-                     <label className="form-label" htmlFor={password}>Senha</label>
-                     <input 
+                    />
+                    <label className="form-label" htmlFor={password}>Senha</label>
+                    <input
                         placeholder="Insira sua senha"
                         type="password"
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                     />
-                    <button className="button" type="submit">Entrar</button>
-
+                    />
+                    <Button className="button" type="submit" loading={loading}>Entrar</Button>
                     <Link className="back-link" to="/register">
                         <FiLogIn size={16} color="#006B3F"/>
                         Não tenho cadastro
