@@ -1,6 +1,6 @@
 import React, { useState, useLayoutEffect } from 'react';
 import { Link, useHistory } from 'react-router-dom';
-import { FiPower, FiTrash2, FiArrowDown, FiArrowUp, FiEdit2 } from 'react-icons/fi';
+import { FiPower, FiTrash2, FiArrowDown, FiArrowUp, FiEdit2, FiInfo } from 'react-icons/fi';
 import Modal from 'react-modal';
 import ReactTooltip from 'react-tooltip';
 import Button from 'react-bootstrap-button-loader';
@@ -24,9 +24,14 @@ export default function Profile() {
     const [baseInvestments, setBaseInvestments] = useState({});
     const [baseWaste, setBaseWaste] = useState({});
     const [baseRemnant, setBaseRemnant] = useState({});
+    const [baseEssentialExpensesToEdit, setBaseEssentialExpensesToEdit] = useState({});
+    const [baseNonEssentialExpensesToEdit, setBaseNonEssentialExpensesToEdit] = useState({});
+    const [baseInvestmentsToEdit, setBaseInvestmentsToEdit] = useState({});
+    const [baseWasteToEdit, setBaseWasteToEdit] = useState({});
     const [modalIsOpen,setIsOpen] = useState(false);
     const [modalToConfirmIsOpen,setToConfirmIsOpen] = useState(false);
     const [modalToEditIsOpen,setToEditIsOpen] = useState(false);
+    const [modalToEditBaseSpendingDivisionIsOpen, setToEditBaseSpendingDivisionIsOpen] = useState(false);
     const [modalText, setModalText] = useState('');
     const [modalNavigation, setModalNavigation] = useState('');
     const [movementIdToRemove, setMovementIdToRemove] = useState('');
@@ -324,6 +329,40 @@ export default function Profile() {
         setMovementIdToRemove('');
     }
 
+    async function handleEditBaseSpendingDivision() {
+        setToEditBaseSpendingDivisionIsOpen(false);
+        try{
+            const data = {
+                essential_expenses: baseEssentialExpensesToEdit/100,
+                non_essential_expenses: baseNonEssentialExpensesToEdit/100,
+                wastes: baseWasteToEdit/100,
+                investments: baseInvestmentsToEdit/100,
+            };
+            console.log(data);
+            await api.put('api/spending-division/base/', data, {
+                headers: {
+                    'Authorization': `Basic ${userToken}` 
+                }
+            });
+            await api.get('api/spending-division/base/', {
+                headers: {
+                'Authorization': `Basic ${userToken}` 
+                }
+            }).then(response => {
+                setBaseIncome(response.data.income);
+                setBaseEssentialExpenses(response.data.essentialExpenses);
+                setBaseNonEssentialExpenses(response.data.nonEssentialExpenses);
+                setBaseInvestments(response.data.investments);
+                setBaseWaste(response.data.waste);
+                setBaseRemnant(response.data.remnant);
+            });
+        } catch (err) {
+            setModalText('Erro ao editar divisão de gastos base, tente novamente.');
+            setModalNavigation();
+            openModal();
+        }
+    }
+
     function openModal() {
         setIsOpen(true);
     }
@@ -343,11 +382,21 @@ export default function Profile() {
         setToEditIsOpen(true);
     }
 
+    function openModalToEditBaseSpendingDivision() {
+        setBaseEssentialExpensesToEdit(transformDecimalInPercentage(baseEssentialExpenses.inPercentage));
+        setBaseNonEssentialExpensesToEdit(transformDecimalInPercentage(baseNonEssentialExpenses.inPercentage));
+        setBaseWasteToEdit(transformDecimalInPercentage(baseWaste.inPercentage));
+        setBaseInvestmentsToEdit(transformDecimalInPercentage(baseInvestments.inPercentage));
+        setModalText('Editar divisão de gastos base');
+        setToEditBaseSpendingDivisionIsOpen(true);
+    }
+
     function closeModal() {
         setMovementIdToRemove('');
         setIsOpen(false);
         setToConfirmIsOpen(false);
         setToEditIsOpen(false);
+        setToEditBaseSpendingDivisionIsOpen(false);
     }
 
     function handleLogout(){
@@ -407,7 +456,50 @@ export default function Profile() {
                         </ul>
                     </li>
                     <li>
-                        <h2>Divisão de gastos base</h2>
+                        <Modal
+                            isOpen={modalToEditBaseSpendingDivisionIsOpen}
+                            id="modal-to-edit-base-spending-division"
+                            ariaHideApp={false}
+                        >
+                            <img src={logoImg} alt="Go To Million" />
+                            <span>{modalText}</span>
+                            <form>
+                                <label className="form-label" htmlFor={baseEssentialExpensesToEdit}>Porcentagem base de GASTOS ESSENCIAIS</label>
+                                <input 
+                                    value={baseEssentialExpensesToEdit}
+                                    onChange={e => setBaseEssentialExpensesToEdit(e.target.value)}
+                                />
+                                <label className="form-label" htmlFor={baseNonEssentialExpensesToEdit}>Porcentagem base de GASTOS NÃO ESSENCIAIS</label>
+                                <input 
+                                    value={baseNonEssentialExpensesToEdit}
+                                    onChange={e => setBaseNonEssentialExpensesToEdit(e.target.value)}
+                                />
+                                <label className="form-label" htmlFor={baseWasteToEdit}>Porcentagem base de GASTOS LIVRES</label>
+                                <input 
+                                    value={baseWasteToEdit}
+                                    onChange={e => setBaseWasteToEdit(e.target.value)}
+                                />
+                                <label className="form-label" htmlFor={baseInvestmentsToEdit}>Porcentagem base de INVESTIMENTOS</label>
+                                <input 
+                                    value={baseInvestmentsToEdit}
+                                    onChange={e => setBaseInvestmentsToEdit(e.target.value)}
+                                />
+                            </form>
+                            <div>
+                                <button className="cancel-modal-button" onClick={() => closeModal()}>Cancelar</button>
+                                <Button className="button" onClick={() => handleEditBaseSpendingDivision()} loading={loading}>Editar</Button>
+                            </div>
+                        </Modal>
+                        <div className="spending-division-base-title-row">
+                            <div className="spending-division-base-title">
+                                <h2>Divisão de gastos base</h2>
+                                <FiInfo size={20} color="#a8a8b3" alt="Informação sobre Divisão de gastos base" data-tip="A divisão de gastos base mostra como você deveria dividir suas receitas. É como se fosse uma meta a ser seguida, você pode editá-la deixando-a de acordo com suas necessidades."/>
+                            </div>
+                            <button onClick={() => openModalToEditBaseSpendingDivision()} type="button">
+                                <FiEdit2 size={20} color="#000000" alt="Botão para editar Divisão de gastos base" data-tip="Editar Divisão de gastos base"/>
+                                <ReactTooltip place="bottom"/>
+                            </button>
+                        </div>
                         <ul>
                             <li>
                                 <strong>Total de receitas:</strong>

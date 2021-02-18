@@ -78,10 +78,34 @@
     font-size: 16px;
 }
 
+.profile-container .spending-division .spending-division-base-title-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-right: 40px;
+}
+
+.profile-container .spending-division .spending-division-base-title-row .spending-division-base-title {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+}
+
+.profile-container .spending-division .spending-division-base-title-row button {
+    background: transparent;
+    border: 0;
+}
+
 .profile-container .spending-division h2 {
     color: #006B3F;
     margin-left: 23px;
 }
+
+.profile-container .spending-division .spending-division-base-title-row .spending-division-base-title h2 {
+    margin-right: 10px;
+}
+
 
 .profile-container .movements table {
     width: 100%;
@@ -219,13 +243,13 @@ h3 {
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    height: 45%;
+    height: min-content;
     width: 35%;
     background: #F0F0F5;
     border-radius: 20px;
     margin: 0;
     top: 50%;
-    transform: translate(85%, 45%);
+    transform: translate(85%);
     border: 0;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
 }
@@ -268,13 +292,13 @@ h3 {
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    height: 45%;
+    height: min-content;
     width: 35%;
     background: #F0F0F5;
     border-radius: 20px;
     margin: 0;
     top: 50%;
-    transform: translate(85%, 45%);
+    transform: translate(85%);
     border: 0;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
 }
@@ -322,13 +346,13 @@ h3 {
     align-items: center;
     justify-content: center;
     flex-direction: column;
-    height: 70%;
+    height: min-content;
     width: 40%;
     background: #F0F0F5;
     border-radius: 20px;
     margin: 0;
     top: 50%;
-    transform: translate(70%, 15%);
+    transform: translate(70%);
     border: 0;
     box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
 }
@@ -372,6 +396,65 @@ h3 {
 }
 
 #modal-to-edit .cancel-modal-button {
+    color: #FFFFFF;
+    background: #AF0A26;
+}
+
+#modal-to-edit-base-spending-division {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    height: min-content;
+    width: 45%;
+    background: #F0F0F5;
+    border-radius: 20px;
+    margin: 0;
+    top: 50%;
+    transform: translate(60%);
+    border: 0;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+}
+
+#modal-to-edit-base-spending-division input,
+#modal-to-edit-base-spending-division select {
+    margin-bottom: 20px;
+}
+
+#modal-to-edit-base-spending-division span {
+    font-family: Roboto;
+    font-style: normal;
+    font-weight: bold;
+    font-size: 24px;
+    line-height: 33px;
+    text-align: center;
+    margin: 45px 55px;
+
+    color: #000000;
+}
+
+#modal-to-edit-base-spending-division img {
+    height: 80px;
+}
+
+#modal-to-edit-base-spending-division button {
+    color: #FFFFFF;
+    background: #006B3F;
+    box-shadow: 0px 4px 4px rgba(0, 0, 0, 0.25);
+    border-radius: 8px;
+    width: 200px;
+    height: 60px;
+    transition: filter 0.2s;
+    text-decoration: none;
+    border: 0;
+    margin-right: 20px;
+}
+
+#modal-to-edit-base-spending-division button:hover {
+    filter: brightness(90%);
+}
+
+#modal-to-edit-base-spending-division .cancel-modal-button {
     color: #FFFFFF;
     background: #AF0A26;
 }
