@@ -1,20 +1,20 @@
-import React, { useState, useLayoutEffect } from 'react';
-import { Link, useHistory } from 'react-router-dom';
-import { FiArrowLeft } from 'react-icons/fi';
-import Button from 'react-bootstrap-button-loader';
-
-import Modal from 'react-modal';
-
-import api from '../../services/api';
 import './styles.css';
 
+import { Link, useHistory } from 'react-router-dom';
+import React, { useLayoutEffect, useState } from 'react';
+
+import Button from 'react-bootstrap-button-loader';
+import { FiArrowLeft } from 'react-icons/fi';
+import Modal from 'react-modal';
+import api from '../../services/api';
 import logoImg from '../../assets/logo.svg';
 
 export default function NewMovement() {
     const [name, setName] = useState('');
     const [classification, setClassification] = useState('');
+    const [date, setDate] = useState('');
     const [value, setValue] = useState('');
-    const [modalIsOpen,setIsOpen] = useState(false);
+    const [modalIsOpen, setIsOpen] = useState(false);
     const [modalText, setModalText] = useState('');
     const [modalNavigation, setModalNavigation] = useState('');
     const [loading, setLoading] = useState(false);
@@ -25,7 +25,7 @@ export default function NewMovement() {
     const firstMovement = localStorage.getItem('classification');
 
     useLayoutEffect(() => {
-        if(!userToken) {
+        if (!userToken) {
             setModalText('Sua sessão expirou, por favor faça login novamente!');
             openModal();
             setModalNavigation('/');
@@ -53,15 +53,17 @@ export default function NewMovement() {
             const data = {
                 name,
                 classification,
+                date,
                 value: value.replace(',', '.'),
             };
-            try{
+
+            try {
                 await api.post(
-                    'api/financial-movement', 
-                    data, 
+                    'api/financial-movement',
+                    data,
                     {
                         headers: {
-                        'Authorization': `Basic ${userToken}` 
+                            'Authorization': `Basic ${userToken}`
                         }
                     }
                 );
@@ -95,24 +97,24 @@ export default function NewMovement() {
             <div className="content">
                 <section>
                     <img src={logoImg} alt="Go To Million" />
-                    
+
                     <h1>Cadastrar Novo Movimento Financeiro</h1>
                     <p>Cadastre um tipo de movimento financeiro pela classificação.</p>
-                    
+
                     <Link className="back-link" to="/profile">
-                        <FiArrowLeft size={16} color="#006B3F"/>
+                        <FiArrowLeft size={16} color="#006B3F" />
                         Voltar para home
                     </Link>
                 </section>
                 <form onSubmit={handleNewMovement}>
                     <label className="form-label" htmlFor={name}>Nome</label>
-                    <input 
+                    <input
                         placeholder="Ex.: Salário"
                         value={name}
                         onChange={e => setName(e.target.value)}
-                     />
-                     <label className="form-label" htmlFor={classification}>Classificação</label>
-                     <select id={classification} name="classification" value={classification} onChange={(e) => { setClassification(e.target.value)}}>
+                    />
+                    <label className="form-label" htmlFor={classification}>Classificação</label>
+                    <select id={classification} name="classification" value={classification} onChange={(e) => { setClassification(e.target.value) }}>
                         <option value="" disabled hidden>Escolha a classificação do movimento</option>
                         {[
                             { value: 'RECEITAS', label: 'Receita' },
@@ -124,12 +126,19 @@ export default function NewMovement() {
                             return <option key={option.value} value={option.value}>{option.label}</option>
                         })}
                     </select>
+                    <label className="form-label" htmlFor={date}>Data</label>
+                    <input
+                        placeholder="Ex.: 01/01/2022"
+                        value={date}
+                        type="date"
+                        onChange={e => setDate(e.target.value)}
+                    />
                     <label className="form-label" htmlFor={value}>Valor</label>
-                    <input 
+                    <input
                         placeholder="Ex.: 1100"
                         value={value}
                         onChange={e => setValue(e.target.value)}
-                     />
+                    />
                     <Button className="button" type="submit" loading={loading}>Cadastrar</Button>
                 </form>
             </div>

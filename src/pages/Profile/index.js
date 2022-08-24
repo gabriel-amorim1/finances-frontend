@@ -1,16 +1,20 @@
-import React, { useState, useLayoutEffect } from 'react';
-import { Link, useHistory } from 'react-router-dom';
-import { FiPower, FiTrash2, FiArrowDown, FiArrowUp, FiEdit2, FiInfo } from 'react-icons/fi';
-import Modal from 'react-modal';
-import ReactTooltip from 'react-tooltip';
-import Button from 'react-bootstrap-button-loader';
-
-import api from '../../services/api';
 import './styles.css';
 
+import { FiArrowDown, FiArrowUp, FiEdit2, FiInfo, FiPower, FiTrash2 } from 'react-icons/fi';
+import { Link, useHistory } from 'react-router-dom';
+import React, { useLayoutEffect, useState } from 'react';
+
+import Button from 'react-bootstrap-button-loader';
+import Modal from 'react-modal';
+import ReactTooltip from 'react-tooltip';
+import api from '../../services/api';
 import logoImg from '../../assets/logo.svg';
 
 export default function Profile() {
+    const now = new Date();
+    const firstDay = new Date(now.getFullYear(), now.getMonth(), 1);
+    const lastDay = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
     const [income, setIncome] = useState({});
     const [essentialExpenses, setEssentialExpenses] = useState({});
     const [nonEssentialExpenses, setNonEssentialExpenses] = useState({});
@@ -28,9 +32,9 @@ export default function Profile() {
     const [baseNonEssentialExpensesToEdit, setBaseNonEssentialExpensesToEdit] = useState({});
     const [baseInvestmentsToEdit, setBaseInvestmentsToEdit] = useState({});
     const [baseWasteToEdit, setBaseWasteToEdit] = useState({});
-    const [modalIsOpen,setIsOpen] = useState(false);
-    const [modalToConfirmIsOpen,setToConfirmIsOpen] = useState(false);
-    const [modalToEditIsOpen,setToEditIsOpen] = useState(false);
+    const [modalIsOpen, setIsOpen] = useState(false);
+    const [modalToConfirmIsOpen, setToConfirmIsOpen] = useState(false);
+    const [modalToEditIsOpen, setToEditIsOpen] = useState(false);
     const [modalToEditBaseSpendingDivisionIsOpen, setToEditBaseSpendingDivisionIsOpen] = useState(false);
     const [modalText, setModalText] = useState('');
     const [modalNavigation, setModalNavigation] = useState('');
@@ -43,6 +47,8 @@ export default function Profile() {
 
     const [nameFilter, setNameFilter] = useState('');
     const [valueFilter, setValueFilter] = useState('');
+    const [startDateFilter, setStartDateFilter] = useState(firstDay.toISOString().split('T')[0]);
+    const [endDateFilter, setEndDateFilter] = useState(lastDay.toISOString().split('T')[0]);
     const [cleanUpFilters, setCleanUpFilters] = useState(false);
     const history = useHistory();
 
@@ -50,14 +56,23 @@ export default function Profile() {
     const userToken = localStorage.getItem('token');
 
     useLayoutEffect(() => {
-        if(!userToken) {
+        if (!userToken) {
             setModalText('A sessão expirou, por favor faça login novamente');
             setModalNavigation('/');
             openModal();
         } else {
-            api.get('api/spending-division/', {
+            const now = new Date();
+            const firstDayOnLoad = new Date(now.getFullYear(), now.getMonth(), 1);
+            const lastDayOnLoad = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+            let url = "";
+            url += '?dateFilter=date';
+            url += '&startDateFilter=' + firstDayOnLoad.toISOString().split('T')[0];
+            url += '&endDateFilter=' + lastDayOnLoad.toISOString().split('T')[0];
+
+            api.get('api/spending-division' + url, {
                 headers: {
-                'Authorization': `Basic ${userToken}` 
+                    'Authorization': `Basic ${userToken}`
                 }
             }).then(response => {
                 setIncome(response.data.income);
@@ -67,18 +82,17 @@ export default function Profile() {
                 setWaste(response.data.waste);
                 setRemnant(response.data.remnant);
                 setMovements([
-                    ...response.data.income.financial_movements, 
-                    ...response.data.essentialExpenses.financial_movements, 
-                    ...response.data.nonEssentialExpenses.financial_movements, 
-                    ...response.data.investments.financial_movements, 
+                    ...response.data.income.financial_movements,
+                    ...response.data.essentialExpenses.financial_movements,
+                    ...response.data.nonEssentialExpenses.financial_movements,
+                    ...response.data.investments.financial_movements,
                     ...response.data.waste.financial_movements,
                 ]);
             }).catch(error => {
-                console.log()
                 if (
-                    error.response.data.code === 400 
+                    error.response.data.code === 400
                     && (error.response.data.message === 'This User has no financial movements registered yet.'
-                    || 'This User has no financial movements as "RECEITAS" registered yet.')
+                        || 'This User has no financial movements as "RECEITAS" registered yet.')
                 ) {
                     localStorage.setItem('classification', 'RECEITAS');
                     setModalText('Você ainda não possui nenhum movimento financeiro do tipo RECEITA cadastrado, por favor cadastre.');
@@ -92,7 +106,7 @@ export default function Profile() {
             })
             api.get('api/spending-division/base/', {
                 headers: {
-                'Authorization': `Basic ${userToken}` 
+                    'Authorization': `Basic ${userToken}`
                 }
             }).then(response => {
                 setBaseIncome(response.data.income);
@@ -106,12 +120,12 @@ export default function Profile() {
     }, [history, userToken]);
 
     function transformDecimalInPercentage(decimalNumber) {
-        if (decimalNumber === 0) return '0'; 
-        if(decimalNumber){
+        if (decimalNumber === 0) return '0';
+        if (decimalNumber) {
             decimalNumber = decimalNumber + '';
 
             if (decimalNumber === '1') return '100';
-            
+
             if (decimalNumber.split(".")[1].split('').length === 1) {
                 return decimalNumber.split(".")[1] + 0
             }
@@ -128,12 +142,14 @@ export default function Profile() {
         e.preventDefault();
         try {
             let url = 'api/financial-movement?';
-            if(cleanUpFilters) {
+            if (cleanUpFilters) {
                 setNameFilter('');
                 setValueFilter('');
+                setStartDateFilter('');
+                setEndDateFilter('');
                 await api.get(url, {
                     headers: {
-                    'Authorization': `Basic ${userToken}` 
+                        'Authorization': `Basic ${userToken}`
                     }
                 }).then(response => {
                     setMovements([
@@ -142,12 +158,24 @@ export default function Profile() {
                     setCleanUpFilters(false);
                 })
             } else {
+                if ((startDateFilter && !endDateFilter) || (!startDateFilter && endDateFilter)) {
+                    setModalText('É necessário filtrar por data inicial e final.');
+                    setModalNavigation();
+                    openModal();
+                    return;
+                }
+
                 if (nameFilter) url += '&name=' + nameFilter;
                 if (valueFilter) url += '&value=' + valueFilter.replace(',', '.');
+                if (startDateFilter) {
+                    url += '&dateFilter=date';
+                    url += '&startDateFilter=' + startDateFilter;
+                    url += '&endDateFilter=' + endDateFilter;
+                }
 
                 await api.get(url, {
                     headers: {
-                        'Authorization': `Basic ${userToken}` 
+                        'Authorization': `Basic ${userToken}`
                     }
                 }).then(response => {
                     setMovements([
@@ -164,11 +192,11 @@ export default function Profile() {
 
     async function sortFilter(sortParam, sortOrder) {
         try {
-            let url = 'api/financial-movement?sortParam=' + sortParam + '&sortOrder='+sortOrder;
+            let url = 'api/financial-movement?sortParam=' + sortParam + '&sortOrder=' + sortOrder;
 
             await api.get(url, {
                 headers: {
-                    'Authorization': `Basic ${userToken}` 
+                    'Authorization': `Basic ${userToken}`
                 }
             }).then(response => {
                 setMovements([
@@ -181,32 +209,30 @@ export default function Profile() {
 
     async function handleEditMovement() {
         setLoading(true);
-        console.log("chegou")
 
         if (!movementIdToEdit || !nameToEdit || !classificationToEdit || !valueToEdit) {
             setModalText('Por favor preencha todos os campos!');
             setModalNavigation();
             openModal();
         } else {
-            console.log(valueToEdit)
             const data = {
                 name: nameToEdit,
                 classification: classificationToEdit,
                 value: valueToEdit.toString().replace(',', '.'),
             };
-            try{
+            try {
                 await api.put(
-                    'api/financial-movement/' + movementIdToEdit, 
-                    data, 
+                    'api/financial-movement/' + movementIdToEdit,
+                    data,
                     {
                         headers: {
-                        'Authorization': `Basic ${userToken}` 
+                            'Authorization': `Basic ${userToken}`
                         }
                     }
                 );
                 api.get('api/spending-division/', {
                     headers: {
-                    'Authorization': `Basic ${userToken}` 
+                        'Authorization': `Basic ${userToken}`
                     }
                 }).then(response => {
                     setIncome(response.data.income);
@@ -216,18 +242,18 @@ export default function Profile() {
                     setWaste(response.data.waste);
                     setRemnant(response.data.remnant);
                     setMovements([
-                        ...response.data.income.financial_movements, 
-                        ...response.data.essentialExpenses.financial_movements, 
-                        ...response.data.nonEssentialExpenses.financial_movements, 
-                        ...response.data.investments.financial_movements, 
+                        ...response.data.income.financial_movements,
+                        ...response.data.essentialExpenses.financial_movements,
+                        ...response.data.nonEssentialExpenses.financial_movements,
+                        ...response.data.investments.financial_movements,
                         ...response.data.waste.financial_movements,
                     ]);
                 }).catch(error => {
                     setMovementIdToRemove('');
                     if (
-                        error.response.data.code === 400 
+                        error.response.data.code === 400
                         && (error.response.data.message === 'This User has no financial movements registered yet.'
-                        || 'This User has no financial movements as "RECEITAS" registered yet.')
+                            || 'This User has no financial movements as "RECEITAS" registered yet.')
                     ) {
                         localStorage.setItem('classification', 'RECEITAS');
                         setModalText('Você ainda não possui nenhum movimento financeiro do tipo RECEITA cadastrado, por favor cadastre.');
@@ -241,7 +267,7 @@ export default function Profile() {
                 });
                 api.get('api/spending-division/base/', {
                     headers: {
-                    'Authorization': `Basic ${userToken}` 
+                        'Authorization': `Basic ${userToken}`
                     }
                 }).then(response => {
                     setBaseIncome(response.data.income);
@@ -267,16 +293,16 @@ export default function Profile() {
 
     async function handleDeleteMovement() {
         setToConfirmIsOpen(false);
-        try{
+        try {
             await api.delete('api/financial-movement/' + movementIdToRemove, {
                 headers: {
-                    'Authorization': `Basic ${userToken}` 
+                    'Authorization': `Basic ${userToken}`
                 }
             });
             setMovements(movements.filter(movement => movement.id !== movementIdToRemove));
             api.get('api/spending-division/', {
                 headers: {
-                'Authorization': `Basic ${userToken}` 
+                    'Authorization': `Basic ${userToken}`
                 }
             }).then(response => {
                 setIncome(response.data.income);
@@ -286,18 +312,18 @@ export default function Profile() {
                 setWaste(response.data.waste);
                 setRemnant(response.data.remnant);
                 setMovements([
-                    ...response.data.income.financial_movements, 
-                    ...response.data.essentialExpenses.financial_movements, 
-                    ...response.data.nonEssentialExpenses.financial_movements, 
-                    ...response.data.investments.financial_movements, 
+                    ...response.data.income.financial_movements,
+                    ...response.data.essentialExpenses.financial_movements,
+                    ...response.data.nonEssentialExpenses.financial_movements,
+                    ...response.data.investments.financial_movements,
                     ...response.data.waste.financial_movements,
                 ]);
             }).catch(error => {
                 setMovementIdToRemove('');
                 if (
-                    error.response.data.code === 400 
+                    error.response.data.code === 400
                     && (error.response.data.message === 'This User has no financial movements registered yet.'
-                    || 'This User has no financial movements as "RECEITAS" registered yet.')
+                        || 'This User has no financial movements as "RECEITAS" registered yet.')
                 ) {
                     localStorage.setItem('classification', 'RECEITAS');
                     setModalText('Você ainda não possui nenhum movimento financeiro do tipo RECEITA cadastrado, por favor cadastre.');
@@ -311,7 +337,7 @@ export default function Profile() {
             });
             api.get('api/spending-division/base/', {
                 headers: {
-                'Authorization': `Basic ${userToken}` 
+                    'Authorization': `Basic ${userToken}`
                 }
             }).then(response => {
                 setBaseIncome(response.data.income);
@@ -331,22 +357,21 @@ export default function Profile() {
 
     async function handleEditBaseSpendingDivision() {
         setToEditBaseSpendingDivisionIsOpen(false);
-        try{
+        try {
             const data = {
-                essential_expenses: baseEssentialExpensesToEdit/100,
-                non_essential_expenses: baseNonEssentialExpensesToEdit/100,
-                wastes: baseWasteToEdit/100,
-                investments: baseInvestmentsToEdit/100,
+                essential_expenses: baseEssentialExpensesToEdit / 100,
+                non_essential_expenses: baseNonEssentialExpensesToEdit / 100,
+                wastes: baseWasteToEdit / 100,
+                investments: baseInvestmentsToEdit / 100,
             };
-            console.log(data);
             await api.put('api/spending-division/base/', data, {
                 headers: {
-                    'Authorization': `Basic ${userToken}` 
+                    'Authorization': `Basic ${userToken}`
                 }
             });
             await api.get('api/spending-division/base/', {
                 headers: {
-                'Authorization': `Basic ${userToken}` 
+                    'Authorization': `Basic ${userToken}`
                 }
             }).then(response => {
                 setBaseIncome(response.data.income);
@@ -399,7 +424,22 @@ export default function Profile() {
         setToEditBaseSpendingDivisionIsOpen(false);
     }
 
-    function handleLogout(){
+    function formatDate(date) {
+        const dateSplitted = date.split('-');
+
+        return dateSplitted[2] + '/' + dateSplitted[1] + '/' + dateSplitted[0];
+    }
+
+    function getMonthName() {
+        const monthNames = ["Janeiro", "Fevereiro", "Março", "Abril", "Maio", "Junho",
+            "Julho", "Agosto", "Setembro", "Outubro", "Novembro", "Dezembro"
+        ];
+
+        const d = new Date();
+        return monthNames[d.getMonth()];
+    }
+
+    function handleLogout() {
         localStorage.clear();
         history.push('/');
     }
@@ -412,8 +452,8 @@ export default function Profile() {
 
                 <Link className="button" to="/financial-movement/new">Cadastrar novo movimento</Link>
                 <button onClick={handleLogout} type="button" alt="Botão de logout" data-tip="Fazer logout">
-                    <ReactTooltip place="bottom"/>
-                    <FiPower size={18} color="#006B3F"/>
+                    <ReactTooltip place="bottom" />
+                    <FiPower size={18} color="#006B3F" />
                 </button>
             </header>
             <Modal
@@ -431,27 +471,27 @@ export default function Profile() {
                 <h1>Divisão de gastos</h1>
                 <ul>
                     <li>
-                        <h2>Divisão de gastos atual</h2>
+                        <h2>Divisão de gastos em {getMonthName()}</h2>
                         <ul>
                             <li>
                                 <strong>Total de receitas:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(income.inValue)} / {transformDecimalInPercentage(income.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(income.inValue)} / {transformDecimalInPercentage(income.inPercentage)}%</p>
 
                                 <strong>Total de Gastos essenciais:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(essentialExpenses.inValue)} / {transformDecimalInPercentage(essentialExpenses.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(essentialExpenses.inValue)} / {transformDecimalInPercentage(essentialExpenses.inPercentage)}%</p>
 
                                 <strong>Total de Gastos Não essenciais:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(nonEssentialExpenses.inValue)} / {transformDecimalInPercentage(nonEssentialExpenses.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(nonEssentialExpenses.inValue)} / {transformDecimalInPercentage(nonEssentialExpenses.inPercentage)}%</p>
                             </li>
                             <li>
                                 <strong>Total de Investimentos:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(investments.inValue)} / {transformDecimalInPercentage(investments.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(investments.inValue)} / {transformDecimalInPercentage(investments.inPercentage)}%</p>
 
                                 <strong>Total de Gastos livres:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(waste.inValue)} / {transformDecimalInPercentage(waste.inPercentage)}%</p>
-                                
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(waste.inValue)} / {transformDecimalInPercentage(waste.inPercentage)}%</p>
+
                                 <strong>Restante</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(remnant.inValue)} / {transformDecimalInPercentage(remnant.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(remnant.inValue)} / {transformDecimalInPercentage(remnant.inPercentage)}%</p>
                             </li>
                         </ul>
                     </li>
@@ -465,22 +505,22 @@ export default function Profile() {
                             <span>{modalText}</span>
                             <form>
                                 <label className="form-label" htmlFor={baseEssentialExpensesToEdit}>Porcentagem base de GASTOS ESSENCIAIS</label>
-                                <input 
+                                <input
                                     value={baseEssentialExpensesToEdit}
                                     onChange={e => setBaseEssentialExpensesToEdit(e.target.value)}
                                 />
                                 <label className="form-label" htmlFor={baseNonEssentialExpensesToEdit}>Porcentagem base de GASTOS NÃO ESSENCIAIS</label>
-                                <input 
+                                <input
                                     value={baseNonEssentialExpensesToEdit}
                                     onChange={e => setBaseNonEssentialExpensesToEdit(e.target.value)}
                                 />
                                 <label className="form-label" htmlFor={baseWasteToEdit}>Porcentagem base de GASTOS LIVRES</label>
-                                <input 
+                                <input
                                     value={baseWasteToEdit}
                                     onChange={e => setBaseWasteToEdit(e.target.value)}
                                 />
                                 <label className="form-label" htmlFor={baseInvestmentsToEdit}>Porcentagem base de INVESTIMENTOS</label>
-                                <input 
+                                <input
                                     value={baseInvestmentsToEdit}
                                     onChange={e => setBaseInvestmentsToEdit(e.target.value)}
                                 />
@@ -493,33 +533,33 @@ export default function Profile() {
                         <div className="spending-division-base-title-row">
                             <div className="spending-division-base-title">
                                 <h2>Divisão de gastos base</h2>
-                                <FiInfo size={20} color="#a8a8b3" alt="Informação sobre Divisão de gastos base" data-tip="A divisão de gastos base mostra como você deveria dividir suas receitas. É como se fosse uma meta a ser seguida, você pode editá-la deixando-a de acordo com suas necessidades."/>
+                                <FiInfo size={20} color="#a8a8b3" alt="Informação sobre Divisão de gastos base" data-tip="A divisão de gastos base mostra como você deveria dividir suas receitas. É como se fosse uma meta a ser seguida, você pode editá-la deixando-a de acordo com suas necessidades." />
                             </div>
                             <button onClick={() => openModalToEditBaseSpendingDivision()} type="button">
-                                <FiEdit2 size={20} color="#000000" alt="Botão para editar Divisão de gastos base" data-tip="Editar Divisão de gastos base"/>
-                                <ReactTooltip place="bottom"/>
+                                <FiEdit2 size={20} color="#000000" alt="Botão para editar Divisão de gastos base" data-tip="Editar Divisão de gastos base" />
+                                <ReactTooltip place="bottom" />
                             </button>
                         </div>
                         <ul>
                             <li>
                                 <strong>Total de receitas:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseIncome.inValue)} / {transformDecimalInPercentage(baseIncome.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baseIncome.inValue)} / {transformDecimalInPercentage(baseIncome.inPercentage)}%</p>
 
                                 <strong>Total de Gastos essenciais:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseEssentialExpenses.inValue)} / {transformDecimalInPercentage(baseEssentialExpenses.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baseEssentialExpenses.inValue)} / {transformDecimalInPercentage(baseEssentialExpenses.inPercentage)}%</p>
 
                                 <strong>Total de Gastos Não essenciais:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseNonEssentialExpenses.inValue)} / {transformDecimalInPercentage(baseNonEssentialExpenses.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baseNonEssentialExpenses.inValue)} / {transformDecimalInPercentage(baseNonEssentialExpenses.inPercentage)}%</p>
                             </li>
                             <li>
                                 <strong>Total de Investimentos:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseInvestments.inValue)} / {transformDecimalInPercentage(baseInvestments.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baseInvestments.inValue)} / {transformDecimalInPercentage(baseInvestments.inPercentage)}%</p>
 
                                 <strong>Total de Gastos livres:</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseWaste.inValue)} / {transformDecimalInPercentage(baseWaste.inPercentage)}%</p>
-                                
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baseWaste.inValue)} / {transformDecimalInPercentage(baseWaste.inPercentage)}%</p>
+
                                 <strong>Restante</strong>
-                                <p>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(baseRemnant.inValue)} / {transformDecimalInPercentage(baseRemnant.inPercentage)}%</p>
+                                <p>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(baseRemnant.inValue)} / {transformDecimalInPercentage(baseRemnant.inPercentage)}%</p>
                             </li>
                         </ul>
                     </li>
@@ -531,11 +571,19 @@ export default function Profile() {
                 <form id="search-movements" onSubmit={searchMovements}>
                     <div className="input-block">
                         <label htmlFor={nameFilter}>Nome</label>
-                        <input type="text" value={nameFilter} onChange={(e) => { setNameFilter(e.target.value)}} />
+                        <input type="text" value={nameFilter} onChange={(e) => { setNameFilter(e.target.value) }} />
                     </div>
                     <div className="input-block">
                         <label htmlFor={valueFilter}>Valor</label>
-                        <input type="text" value={valueFilter} onChange={(e) => { setValueFilter(e.target.value)}} />
+                        <input type="text" value={valueFilter} onChange={(e) => { setValueFilter(e.target.value) }} />
+                    </div>
+                    <div className="input-block">
+                        <label htmlFor={startDateFilter}>Data Inicial</label>
+                        <input type="date" value={startDateFilter} onChange={(e) => { setStartDateFilter(e.target.value) }} />
+                    </div>
+                    <div className="input-block">
+                        <label htmlFor={endDateFilter}>Data Final</label>
+                        <input type="date" value={endDateFilter} onChange={(e) => { setEndDateFilter(e.target.value) }} />
                     </div>
                     <div className="search_buttons">
                         <button id="button_filters" type="submit" className="button">
@@ -554,34 +602,45 @@ export default function Profile() {
                             <th>
                                 NOME
                                 <button onClick={() => sortFilter('name', 'desc')} type="button">
-                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por nome de forma decrescente"/>
-                                    <ReactTooltip place="bottom"/>
+                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por nome de forma decrescente" />
+                                    <ReactTooltip place="bottom" />
                                 </button>
                                 <button onClick={() => sortFilter('name', 'asc')} type="button">
-                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por nome de forma crescente"/>
-                                    <ReactTooltip place="bottom"/>
+                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por nome de forma crescente" />
+                                    <ReactTooltip place="bottom" />
                                 </button>
                             </th>
                             <th>
                                 CLASSIFICAÇÃO
                                 <button onClick={() => sortFilter('classification', 'desc')} type="button">
-                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por classificação de forma decrescente"/>
-                                    <ReactTooltip place="bottom"/>
+                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por classificação de forma decrescente" />
+                                    <ReactTooltip place="bottom" />
                                 </button>
                                 <button onClick={() => sortFilter('classification', 'asc')} type="button">
-                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por classificação de forma crescente"/>
-                                    <ReactTooltip place="bottom"/>
+                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por classificação de forma crescente" />
+                                    <ReactTooltip place="bottom" />
                                 </button>
                             </th>
                             <th>
                                 VALOR
                                 <button onClick={() => sortFilter('value', 'desc')} type="button">
-                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por valor de forma decrescente"/>
-                                    <ReactTooltip place="bottom"/>
+                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por valor de forma decrescente" />
+                                    <ReactTooltip place="bottom" />
                                 </button>
                                 <button onClick={() => sortFilter('value', 'asc')} type="button">
-                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por valor de forma crescente"/>
-                                    <ReactTooltip place="bottom"/>
+                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por valor de forma crescente" />
+                                    <ReactTooltip place="bottom" />
+                                </button>
+                            </th>
+                            <th>
+                                DATA
+                                <button onClick={() => sortFilter('value', 'desc')} type="button">
+                                    <FiArrowDown size={16} color="#006B3F" alt="Botão de ordem decrescente" data-tip="Ordenar por valor de forma decrescente" />
+                                    <ReactTooltip place="bottom" />
+                                </button>
+                                <button onClick={() => sortFilter('value', 'asc')} type="button">
+                                    <FiArrowUp size={16} color="#006B3F" alt="Botão de ordem crescente" data-tip="Ordenar por valor de forma crescente" />
+                                    <ReactTooltip place="bottom" />
                                 </button>
                             </th>
                             <th></th>
@@ -596,13 +655,13 @@ export default function Profile() {
                         <span>{modalText}</span>
                         <form onSubmit={handleEditMovement}>
                             <label className="form-label" htmlFor={nameToEdit}>Nome</label>
-                            <input 
+                            <input
                                 placeholder="Ex.: Salário"
                                 value={nameToEdit}
                                 onChange={e => setNameToEdit(e.target.value)}
                             />
                             <label className="form-label" htmlFor={classificationToEdit}>Classificação</label>
-                            <select id={classificationToEdit} name="classificationToEdit" value={classificationToEdit} onChange={(e) => { setClassificationToEdit(e.target.value)}}>
+                            <select id={classificationToEdit} name="classificationToEdit" value={classificationToEdit} onChange={(e) => { setClassificationToEdit(e.target.value) }}>
                                 <option value="" disabled hidden>Escolha a classificação do movimento</option>
                                 {[
                                     { value: 'RECEITAS', label: 'Receita' },
@@ -615,12 +674,12 @@ export default function Profile() {
                                 })}
                             </select>
                             <label className="form-label" htmlFor={valueToEdit}>Valor</label>
-                            <input 
+                            <input
                                 placeholder="Ex.: 1100"
                                 value={valueToEdit}
                                 onChange={e => setValueToEdit(e.target.value)}
                             />
-                            
+
                         </form>
                         <div>
                             <button className="cancel-modal-button" onClick={() => closeModal()}>Cancelar</button>
@@ -644,15 +703,16 @@ export default function Profile() {
                             <tr key={movement.id}>
                                 <td className="name">{movement.name}</td>
                                 <td className="classification">{movement.classification}</td>
-                                <td>{Intl.NumberFormat('pt-BR', {style: 'currency', currency: 'BRL'}).format(movement.value)}</td>
+                                <td>{Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(movement.value)}</td>
+                                <td className="date">{formatDate(movement.date)}</td>
                                 <td>
                                     <button onClick={() => openModalToEdit(movement)} type="button">
-                                        <FiEdit2 size={20} color="#a8a8b3" alt="Botão de editar movimento" data-tip="Editar movimento"/>
-                                        <ReactTooltip place="bottom"/>
+                                        <FiEdit2 size={20} color="#a8a8b3" alt="Botão de editar movimento" data-tip="Editar movimento" />
+                                        <ReactTooltip place="bottom" />
                                     </button>
                                     <button onClick={() => openModalToConfirm(movement.id)} type="button">
-                                        <FiTrash2 size={20} color="#a8a8b3" alt="Botão de excluir movimento" data-tip="Excluir movimento"/>
-                                        <ReactTooltip place="bottom"/>
+                                        <FiTrash2 size={20} color="#a8a8b3" alt="Botão de excluir movimento" data-tip="Excluir movimento" />
+                                        <ReactTooltip place="bottom" />
                                     </button>
                                 </td>
                             </tr>
